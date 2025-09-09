@@ -75,19 +75,6 @@ class TiDBService {
       )
     `;
 
-    // Create jobs table
-    const createJobsTable = `
-      CREATE TABLE IF NOT EXISTS jobs (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        requirements JSON,
-        job_vector VECTOR(1536),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `;
-
     // Create conversations table
     const createConversationsTable = `
       CREATE TABLE IF NOT EXISTS conversations (
@@ -123,29 +110,11 @@ class TiDBService {
       )
     `;
 
-    // Create feedback table
-    const createFeedbackTable = `
-      CREATE TABLE IF NOT EXISTS feedback (
-        id INT PRIMARY KEY AUTO_INCREMENT,
-        job_id INT NOT NULL,
-        candidate_id INT NOT NULL,
-        user_id INT NOT NULL,
-        rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-        comment TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
-        FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `;
-
     try {
       await this.executeQuery(createCandidatesTable);
-      await this.executeQuery(createJobsTable);
       await this.executeQuery(createConversationsTable);
       await this.executeQuery(createMessagesTable);
       await this.executeQuery(createUsersTable);
-      await this.executeQuery(createFeedbackTable);
       console.log('Tables created successfully');
     } catch (error) {
       console.error('Error creating tables:', error);
