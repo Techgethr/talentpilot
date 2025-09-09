@@ -11,6 +11,11 @@ const api = axios.create({
   },
 });
 
+// Create a separate instance for file uploads
+const apiWithFiles = axios.create({
+  baseURL: '/api',
+});
+
 // Chat endpoints
 export const chatAPI = {
   sendMessage: (message) => 
@@ -19,8 +24,14 @@ export const chatAPI = {
 
 // Candidate endpoints
 export const candidateAPI = {
-  uploadCV: (candidateData) => 
-    api.post('/candidates/upload', candidateData),
+  uploadCV: (formData) => {
+    // For file uploads, we need to use FormData and let axios set the correct headers
+    return apiWithFiles.post('/candidates/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
   getCandidate: (id) => 
     api.get(`/candidates/${id}`),
 };

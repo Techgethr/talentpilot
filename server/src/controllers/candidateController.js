@@ -1,24 +1,35 @@
 // src/controllers/candidateController.js
 const tidbService = require('../services/tidbService');
 const nlpService = require('../services/nlpService');
+const fileProcessingService = require('../services/fileProcessingService');
 
 /**
- * Upload and process candidate CV
+ * Upload and process candidate CV file
  * @param {import('express').Request} req 
  * @param {import('express').Response} res 
  */
 async function uploadCV(req, res) {
   try {
-    const { name, email, phone, cvText } = req.body;
+    const { name, email, phone } = req.body;
     
-    if (!name || !cvText) {
-      return res.status(400).json({ error: 'Name and CV text are required' });
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({ error: 'CV file is required' });
     }
     
-    // Process CV text to extract information
-    const skills = await nlpService.extractSkills(cvText);
-    const experience = await nlpService.extractExperience(cvText);
-    const education = await nlpService.extractEducation(cvText);
+    if (!name) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+    
+    // Process the uploaded file to extract text
+    const cvText = await fileProcessingService.processFile(
+      req.file.buffer, 
+      req.file.mimetype
+    );
+    
+    if (!cvText || cvText.trim().length === 0) {
+      return res.status(400).json({ error: 'Could not extract text from the uploaded file' });
+    }
     
     // Convert CV text to vector
     const cvVector = await nlpService.textToVector(cvText);
@@ -28,9 +39,6 @@ async function uploadCV(req, res) {
       name,
       email: email || null,
       phone: phone || null,
-      skills,
-      experience,
-      education,
       cvText,
       cvVector
     };
@@ -44,7 +52,7 @@ async function uploadCV(req, res) {
     });
   } catch (error) {
     console.error('Error in uploadCV:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error: ' + error.message });
   }
 }
 
@@ -57,7 +65,7 @@ async function getCandidate(req, res) {
   try {
     const { id } = req.params;
     
-    const sql = 'SELECT * FROM candidates WHERE id = ?';
+    const sql = 'SELECT id, name, email, phone, cv_text, created_at, updated_at FROM candidates WHERE id = ?';
     const candidates = await tidbService.executeQuery(sql, [id]);
     
     if (candidates.length === 0) {
@@ -65,8 +73,6 @@ async function getCandidate(req, res) {
     }
     
     const candidate = candidates[0];
-    candidate.skills = JSON.parse(candidate.skills);
-    candidate.cv_vector = JSON.parse(candidate.cv_vector);
     
     res.json({
       success: true,

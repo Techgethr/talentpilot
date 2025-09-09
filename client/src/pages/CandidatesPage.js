@@ -1,5 +1,5 @@
 // client/src/pages/CandidatesPage.js
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { candidateAPI } from '../services/api';
 import './CandidatesPage.css';
 
@@ -8,12 +8,13 @@ const CandidatesPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
-    cvText: ''
+    phone: ''
   });
+  const [cvFile, setCvFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const fileInputRef = useRef(null);
 
   const handleChange = (e) => {
     setFormData({
@@ -22,26 +23,57 @@ const CandidatesPage = () => {
     });
   };
 
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setCvFile(e.target.files[0]);
+    }
+  };
+
+  const handleFileRemove = () => {
+    setCvFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!cvFile) {
+      setSubmitError('Please select a CV file to upload');
+      return;
+    }
+    
     setIsSubmitting(true);
     setSubmitError('');
     setSubmitSuccess(false);
 
     try {
-      await candidateAPI.uploadCV(formData);
+      // Create FormData object to send file
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('phone', formData.phone);
+      formDataToSend.append('cvFile', cvFile);
+
+      await candidateAPI.uploadCV(formDataToSend);
       setSubmitSuccess(true);
+      
       // Reset form
       setFormData({
         name: '',
         email: '',
-        phone: '',
-        cvText: ''
+        phone: ''
       });
+      setCvFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
       // In a real app, you might want to refresh the candidates list here
     } catch (error) {
       console.error('Error uploading CV:', error);
-      setSubmitError('Failed to upload CV. Please try again.');
+      setSubmitError(error.response?.data?.error || 'Failed to upload CV. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -94,16 +126,27 @@ const CandidatesPage = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="cvText">CV Text</label>
-              <textarea
-                id="cvText"
-                name="cvText"
-                value={formData.cvText}
-                onChange={handleChange}
-                rows="10"
+              <label htmlFor="cvFile">CV File</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                id="cvFile"
+                name="cvFile"
+                onChange={handleFileChange}
+                accept=".pdf,.docx,.txt"
                 required
-                placeholder="Paste the candidate's CV text here..."
               />
+              {cvFile && (
+                <div className="file-preview">
+                  <span>{cvFile.name}</span>
+                  <button type="button" onClick={handleFileRemove} className="remove-file">
+                    Remove
+                  </button>
+                </div>
+              )}
+              <div className="file-hint">
+                Supported formats: PDF, Word (.docx), TXT
+              </div>
             </div>
 
             {submitError && <div className="error-message">{submitError}</div>}

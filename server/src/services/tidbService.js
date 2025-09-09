@@ -60,16 +60,13 @@ class TiDBService {
    * Create tables if they don't exist
    */
   async createTables() {
-    // Create candidates table
+    // Create candidates table with simplified structure
     const createCandidatesTable = `
       CREATE TABLE IF NOT EXISTS candidates (
         id INT PRIMARY KEY AUTO_INCREMENT,
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE,
         phone VARCHAR(50),
-        skills JSON,
-        experience TEXT,
-        education TEXT,
         cv_text TEXT,
         cv_vector VECTOR(128),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -151,17 +148,14 @@ class TiDBService {
    */
   async storeCandidate(candidateData) {
     const sql = `
-      INSERT INTO candidates (name, email, phone, skills, experience, education, cv_text, cv_vector)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO candidates (name, email, phone, cv_text, cv_vector)
+      VALUES (?, ?, ?, ?, ?)
     `;
 
     const params = [
       candidateData.name,
       candidateData.email,
       candidateData.phone,
-      JSON.stringify(candidateData.skills),
-      candidateData.experience,
-      candidateData.education,
       candidateData.cvText,
       JSON.stringify(candidateData.cvVector)
     ];
@@ -180,8 +174,8 @@ class TiDBService {
     // This is a simplified implementation
     // In a real scenario, you would use vector similarity functions
     const sql = `
-      SELECT id, name, email, skills, experience, 
-             VEC_COSINE_DISTANCE(cv_vector, ?) as similarity
+      SELECT id, name, email, phone,
+             COSINE_DISTANCE(cv_vector, ?) as similarity
       FROM candidates
       ORDER BY similarity DESC
       LIMIT ?
@@ -194,8 +188,7 @@ class TiDBService {
       id: candidate.id,
       name: candidate.name,
       email: candidate.email,
-      skills: JSON.parse(candidate.skills),
-      experience: candidate.experience,
+      phone: candidate.phone,
       similarity: candidate.similarity
     }));
   }
