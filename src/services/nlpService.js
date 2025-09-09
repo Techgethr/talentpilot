@@ -20,6 +20,39 @@ class NLPService {
   }
 
   /**
+   * Extract skills from CV text
+   * @param {string} cvText - Text content of CV
+   * @returns {Promise<Array>} - Array of extracted skills
+   */
+  async extractSkills(cvText) {
+    // In a real implementation, this would use NLP to extract skills
+    // Placeholder implementation
+    return ["JavaScript", "React", "Node.js", "SQL"];
+  }
+
+  /**
+   * Extract experience from CV text
+   * @param {string} cvText - Text content of CV
+   * @returns {Promise<string>} - Extracted experience information
+   */
+  async extractExperience(cvText) {
+    // In a real implementation, this would use NLP to extract experience
+    // Placeholder implementation
+    return "5 years of experience in web development";
+  }
+
+  /**
+   * Extract education from CV text
+   * @param {string} cvText - Text content of CV
+   * @returns {Promise<string>} - Extracted education information
+   */
+  async extractEducation(cvText) {
+    // In a real implementation, this would use NLP to extract education
+    // Placeholder implementation
+    return "Bachelor's degree in Computer Science";
+  }
+
+  /**
    * Convert text to vector representation
    * @param {string} text - Text to convert to vector
    * @returns {Promise<Array>} - Vector representation

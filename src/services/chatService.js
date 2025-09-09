@@ -1,6 +1,6 @@
 // src/services/chatService.js
 const nlpService = require('./nlpService');
-const vectorDbService = require('./vectorDbService');
+const tidbService = require('./tidbService');
 
 /**
  * Process user message and return relevant candidates
@@ -15,8 +15,8 @@ async function processMessage(message) {
     // Convert job description to vector
     const queryVector = await nlpService.textToVector(message);
     
-    // Search for candidates in vector database
-    const candidates = await vectorDbService.searchCandidates(queryVector, 10);
+    // Search for candidates in database
+    const candidates = await tidbService.searchCandidates(queryVector, 10);
     
     return {
       query: message,
