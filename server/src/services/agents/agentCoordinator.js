@@ -10,23 +10,40 @@ class AgentCoordinator {
   /**
    * Process job description and find matching candidates
    * @param {string} jobDescription - Job description provided by user
+   * @param {Function} progressCallback - Callback function to report progress (optional)
    * @returns {Promise<Object>} - Complete analysis with candidates and communication templates
    */
-  async processJobDescription(jobDescription) {
+  async processJobDescription(jobDescription, progressCallback = null) {
     try {
+      // Report progress if callback provided
+      if (progressCallback) progressCallback('Analyzing job requirements...');
+      
       // Step 1: Analyze job description
       console.log('Step 1: Analyzing job description...');
       const jobRequirements = await jobAnalysisAgent.analyzeJob(jobDescription);
+      
+      // Report progress
+      if (progressCallback) progressCallback('Searching for candidates...');
       
       // Step 2: Search for candidates
       console.log('Step 2: Searching for candidates...');
       const candidates = await candidateSearchAgent.searchCandidates(jobRequirements, 10);
       
+      // Report progress
+      if (progressCallback) progressCallback(`Generating profiles for ${candidates.length} candidates...`);
+      
       // Step 3: Generate profile summaries and communication templates for each candidate
       console.log('Step 3: Generating profile summaries and communication templates...');
       const enhancedCandidates = [];
       
-      for (const candidate of candidates) {
+      for (let i = 0; i < candidates.length; i++) {
+        const candidate = candidates[i];
+        
+        // Report progress for each candidate
+        if (progressCallback) {
+          progressCallback(`Generating profile for candidate ${i + 1} of ${candidates.length}: ${candidate.name || 'Unknown'}...`);
+        }
+        
         try {
           // Generate profile summary
           const profileSummary = await profileSummaryAgent.generateProfileSummary(
@@ -75,12 +92,18 @@ We have an opportunity that might interest you.`
         }
       }
       
+      // Report progress
+      if (progressCallback) progressCallback('Generating final summary...');
+      
       // Step 4: Generate overall summary
       console.log('Step 4: Generating overall summary...');
       const overallSummary = await this.generateOverallSummary(
         jobRequirements, 
         enhancedCandidates
       );
+      
+      // Report completion
+      if (progressCallback) progressCallback('Complete!');
       
       return {
         success: true,
@@ -101,23 +124,6 @@ We have an opportunity that might interest you.`
    * @returns {Promise<string>} - Overall summary
    */
   async generateOverallSummary(jobRequirements, candidates) {
-    const prompt = `
-      Create a comprehensive summary of the job requirements and candidate matches.
-      
-      Job Requirements:
-      ${JSON.stringify(jobRequirements, null, 2)}
-      
-      Top Candidate Matches:
-      ${JSON.stringify(candidates.slice(0, 3), null, 2)}
-      
-      Provide a summary that includes:
-      1. Key job requirements overview
-      2. Number of candidates found
-      3. Overall quality of matches
-      4. Recommendations for next steps
-      5. Any notable patterns or insights
-    `;
-
     // For now, we'll return a simple summary
     // In a production environment, you might want to use AI to generate this
     return `

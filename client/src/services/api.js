@@ -30,11 +30,13 @@ export const conversationAPI = {
     api.get(`/conversations/${id}`),
   createConversation: (title) => 
     api.post('/conversations', { title }),
+  updateConversationTitle: (id, title) => 
+    api.put(`/conversations/${id}/title`, { title }),
   sendMessage: (data) => 
     api.post('/conversations/message', data),
   deleteConversation: (id) => 
     api.delete(`/conversations/${id}`),
-};
+}
 
 // Candidate endpoints
 export const candidateAPI = {

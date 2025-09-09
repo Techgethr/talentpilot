@@ -89,29 +89,42 @@ async function sendMessage(req, res) {
     
     // Get or create conversation
     let conversation;
+    let isNewConversation = false;
     if (conversationId) {
       conversation = await tidbService.getConversationById(conversationId);
       if (!conversation) {
         return res.status(404).json({ error: 'Conversation not found' });
       }
     } else {
-      // Create new conversation with first 50 characters of message as title
-      const title = message.substring(0, 50) + (message.length > 50 ? '...' : '');
+      // Create new conversation with default title
+      const title = 'New Conversation';
       const newConversationId = await tidbService.createConversation(title);
       conversation = await tidbService.getConversationById(newConversationId);
+      isNewConversation = true;
     }
     
     // Add user message to conversation
     await tidbService.addMessage(conversation.id, 'user', message);
     
     // Process the job description and find matching candidates
+    // We'll use a progress callback to update the frontend
     const result = await agentCoordinator.processJobDescription(message);
     
     // Format the response with complete details
-    const responseText = formatDetailedAgentResponse(result);
+    const responseText = formatCompleteAgentResponse(result);
     
     // Add assistant message to conversation
     await tidbService.addMessage(conversation.id, 'assistant', responseText);
+    
+    // If this is a new conversation and we have a job title, update the conversation title
+    if (isNewConversation && result.jobRequirements && result.jobRequirements.jobTitle) {
+      const jobTitle = result.jobRequirements.jobTitle;
+      // Limit title to 100 characters
+      const newTitle = jobTitle.length > 100 ? jobTitle.substring(0, 100) + '...' : jobTitle;
+      await tidbService.updateConversationTitle(conversation.id, newTitle);
+      // Refresh conversation object with new title
+      conversation = await tidbService.getConversationById(conversation.id);
+    }
     
     // Get all messages for the conversation
     const messages = await tidbService.getMessagesByConversationId(conversation.id);
@@ -123,7 +136,8 @@ async function sendMessage(req, res) {
           ...conversation,
           messages
         },
-        agentResult: result
+        agentResult: result,
+        candidatesDelivered: result.candidates && result.candidates.length > 0
       }
     });
   } catch (error) {
@@ -133,70 +147,102 @@ async function sendMessage(req, res) {
 }
 
 /**
- * Format detailed agent response with complete information
+ * Format complete agent response with all details including contact recommendations
  * @param {Object} result - Agent result
- * @returns {string} - Formatted detailed response
+ * @returns {string} - Formatted complete response
  */
-function formatDetailedAgentResponse(result) {
+function formatCompleteAgentResponse(result) {
   if (!result || !result.candidates) {
     return "I couldn't process your request. Please try again.";
   }
   
-  let response = `# Job Analysis Results
-
-`;
+  let response = `# Job Analysis Results\n\n`;
   
   // Job Requirements
-  response += `## Job Requirements
-`;
-  response += `- **Title**: ${result.jobRequirements.jobTitle || 'Not specified'}
-`;
-  response += `- **Experience Level**: ${result.jobRequirements.experienceLevel || 'Not specified'}
-`;
-  response += `- **Key Skills**: ${result.jobRequirements.requiredSkills?.join(', ') || 'Not specified'}
-`;
-  response += `- **Education**: ${result.jobRequirements.education || 'Not specified'}
-
-`;
+  response += `## Job Requirements\n`;
+  response += `- **Title**: ${result.jobRequirements.jobTitle || 'Not specified'}\n`;
+  response += `- **Experience Level**: ${result.jobRequirements.experienceLevel || 'Not specified'}\n`;
+  response += `- **Key Skills**: ${result.jobRequirements.requiredSkills?.join(', ') || 'Not specified'}\n`;
+  response += `- **Education**: ${result.jobRequirements.education || 'Not specified'}\n\n`;
   
   // Candidates Found
-  response += `## Candidates Found (${result.candidates.length})
-
-`;
+  response += `## Candidates Found (${result.candidates.length})\n\n`;
   
   result.candidates.slice(0, 10).forEach((candidate, index) => {
-    response += `### ${index + 1}. ${candidate.name}
-`;
-    response += `- **Email**: ${candidate.email || 'Not provided'}
-`;
-    response += `- **Phone**: ${candidate.phone || 'Not provided'}
-`;
-    response += `- **LinkedIn**: ${candidate.linkedinUrl || 'Not provided'}
-`;
-    response += `- **Match Score**: ${(candidate.similarity * 100).toFixed(1)}%
-`;
+    response += `### ${index + 1}. ${candidate.name}\n`;
+    response += `- **Email**: ${candidate.email || 'Not provided'}\n`;
+    response += `- **Phone**: ${candidate.phone || 'Not provided'}\n`;
+    response += `- **LinkedIn**: ${candidate.linkedinUrl || 'Not provided'}\n`;
+    response += `- **Match Score**: ${(candidate.similarity * 100).toFixed(1)}%\n`;
     
     if (candidate.profileSummary) {
-      response += `- **Profile Summary**: ${candidate.profileSummary}
-`;
+      response += `- **Profile Summary**: ${candidate.profileSummary}\n`;
     }
     
     if (candidate.matchAnalysis) {
-      response += `- **Match Analysis**:
-`;
-      response += `  - Match Score: ${candidate.matchAnalysis.matchScore || 'N/A'}
-`;
-      response += `  - Strengths: ${candidate.matchAnalysis.strengths?.join(', ') || 'N/A'}
-`;
-      response += `  - Key Skills Match: ${candidate.matchAnalysis.keySkillsMatch?.join(', ') || 'N/A'}
-`;
+      response += `- **Match Analysis**:\n`;
+      response += `  - Match Score: ${candidate.matchAnalysis.matchScore || 'N/A'}\n`;
+      response += `  - Strengths: ${candidate.matchAnalysis.strengths?.join(', ') || 'N/A'}\n`;
+      response += `  - Key Skills Match: ${candidate.matchAnalysis.keySkillsMatch?.join(', ') || 'N/A'}\n`;
     }
     
-    response += `
-`;
+    // Contact Recommendations
+    if (candidate.communicationTemplates) {
+      response += `- **Contact Recommendations**:\n`;
+      
+      // Email template
+      if (candidate.communicationTemplates.email) {
+        response += `  - **Email Subject**: ${candidate.communicationTemplates.email.subject}\n`;
+        response += `  - **Email Body**: ${candidate.communicationTemplates.email.body}\n`;
+      }
+      
+      // LinkedIn message
+      if (candidate.communicationTemplates.linkedin) {
+        response += `  - **LinkedIn Message**: ${candidate.communicationTemplates.linkedin.message}\n`;
+      }
+      
+      // Phone script
+      if (candidate.communicationTemplates.phone) {
+        response += `  - **Phone Script**:\n`;
+        response += `    - Opening: ${candidate.communicationTemplates.phone.opening}\n`;
+        response += `    - Introduction: ${candidate.communicationTemplates.phone.introduction}\n`;
+        response += `    - Value Proposition: ${candidate.communicationTemplates.phone.valueProposition}\n`;
+        response += `    - Questions: ${candidate.communicationTemplates.phone.questions?.join(', ') || 'N/A'}\n`;
+        response += `    - Next Steps: ${candidate.communicationTemplates.phone.nextSteps}\n`;
+      }
+    }
+    
+    response += `\n`;
   });
   
   return response;
+}
+
+/**
+ * Update conversation title
+ * @param {import('express').Request} req 
+ * @param {import('express').Response} res 
+ */
+async function updateConversationTitle(req, res) {
+  try {
+    const { id } = req.params;
+    const { title } = req.body;
+    
+    const conversation = await tidbService.getConversationById(id);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    
+    await tidbService.updateConversationTitle(id, title);
+    
+    res.json({
+      success: true,
+      message: 'Conversation title updated successfully'
+    });
+  } catch (error) {
+    console.error('Error in updateConversationTitle:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
 /**
@@ -229,6 +275,7 @@ module.exports = {
   getAllConversations,
   getConversation,
   createConversation,
+  updateConversationTitle,
   sendMessage,
   deleteConversation
 };

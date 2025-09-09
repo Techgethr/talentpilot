@@ -276,6 +276,34 @@
   50% { transform: translateY(-5px); }
 }
 
+/* Progress Steps */
+.progress-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.progress-step {
+  flex: 1;
+  min-width: 120px;
+  padding: 8px 12px;
+  background-color: #ecf0f1;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #7f8c8d;
+  transition: all 0.3s ease;
+}
+
+.progress-step.active {
+  background-color: #3498db;
+  color: white;
+  font-weight: bold;
+}
+
 .chat-input-container {
   padding: 1rem;
   background-color: white;
@@ -330,6 +358,17 @@
   font-size: 0.75rem;
   color: #7f8c8d;
   text-align: center;
+}
+
+/* Conversation Complete Message */
+.conversation-complete-message {
+  padding: 1rem;
+  background-color: #e8f4fc;
+  border-top: 1px solid #3498db;
+  border-bottom: 1px solid #3498db;
+  text-align: center;
+  color: #2c3e50;
+  font-style: italic;
 }
 
 /* Responsive Design */

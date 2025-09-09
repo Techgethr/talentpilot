@@ -13,6 +13,9 @@ router.post('/', conversationController.createConversation);
 // GET /conversations/:id - Get conversation by ID
 router.get('/:id', conversationController.getConversation);
 
+// PUT /conversations/:id/title - Update conversation title
+router.put('/:id/title', conversationController.updateConversationTitle);
+
 // POST /conversations/message - Send message in conversation
 router.post('/message', conversationController.sendMessage);
 

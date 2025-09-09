@@ -9,6 +9,7 @@ const ChatGPTPage = () => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [processingStep, setProcessingStep] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const messagesEndRef = useRef(null);
 
@@ -20,7 +21,7 @@ const ChatGPTPage = () => {
   // Scroll to bottom of messages when messages change
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, processingStep]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -58,11 +59,24 @@ const ChatGPTPage = () => {
     }
   };
 
+  const [candidatesDelivered, setCandidatesDelivered] = useState(false);
+  const [processingSteps, setProcessingSteps] = useState([
+    'Analyzing job requirements...',
+    'Searching for candidates...',
+    'Generating candidate profiles...',
+    'Creating communication templates...',
+    'Generating final summary...'
+  ]);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
     try {
       setIsLoading(true);
+      setProcessingStep('Analyzing job requirements...');
+      setCurrentStepIndex(0);
+      setCandidatesDelivered(false); // Reset the flag when sending a new message
       
       // Add user message to UI immediately
       const userMessage = {
@@ -75,6 +89,26 @@ const ChatGPTPage = () => {
       setMessages(prev => [...prev, userMessage]);
       setInputValue('');
       
+      // Simulate progress updates
+      const steps = [
+        'Analyzing job requirements...',
+        'Searching for candidates...',
+        'Generating candidate profiles...',
+        'Creating communication templates...',
+        'Generating final summary...'
+      ];
+      
+      let stepIndex = 0;
+      const progressInterval = setInterval(() => {
+        if (stepIndex < steps.length - 1) {
+          stepIndex++;
+          setProcessingStep(steps[stepIndex]);
+          setCurrentStepIndex(stepIndex);
+        } else {
+          clearInterval(progressInterval);
+        }
+      }, 1500);
+      
       // Send message to API
       const requestData = {
         message: inputValue,
@@ -82,6 +116,12 @@ const ChatGPTPage = () => {
       };
       
       const response = await conversationAPI.sendMessage(requestData);
+      
+      // Clear progress interval
+      clearInterval(progressInterval);
+      
+      // Clear processing step
+      setProcessingStep('');
       
       // Update conversation and messages
       if (response.data.data.conversation) {
@@ -96,9 +136,17 @@ const ChatGPTPage = () => {
         }
         
         setMessages(response.data.data.conversation.messages);
+        
+        // Check if candidates were delivered
+        if (response.data.data.candidatesDelivered) {
+          setCandidatesDelivered(true);
+        }
       }
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      // Clear processing step
+      setProcessingStep('');
       
       // Add error message to UI
       const errorMessage = {
@@ -111,6 +159,7 @@ const ChatGPTPage = () => {
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      setProcessingStep('');
     }
   };
 
@@ -147,12 +196,13 @@ const ChatGPTPage = () => {
       .replace(/^# (.*$)/gm, '<h1>$1</h1>')
       .replace(/^## (.*$)/gm, '<h2>$1</h2>')
       .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
       .replace(/^\- (.*$)/gm, '<li>$1</li>')
       .replace(/\n\n/g, '</p><p>')
       .replace(/\n/g, '<br>');
     
     // Wrap content in paragraphs
-    if (!formattedContent.startsWith('<h')) {
+    if (!formattedContent.startsWith('<h') && !formattedContent.startsWith('<p')) {
       formattedContent = '<p>' + formattedContent + '</p>';
     }
     
@@ -234,7 +284,7 @@ const ChatGPTPage = () => {
             ))
           )}
           
-          {isLoading && (
+          {isLoading && processingStep && (
             <div className="message assistant">
               <div className="message-content">
                 <div className="message-header">Assistant</div>
@@ -243,7 +293,16 @@ const ChatGPTPage = () => {
                   <span></span>
                   <span></span>
                 </div>
-                <p>Analyzing job requirements and searching for candidates...</p>
+                <p>{processingStep}</p>
+                
+                {/* Progress steps visualization */}
+                <div className="progress-steps">
+                  <div className={`progress-step ${currentStepIndex >= 0 ? 'active' : ''}`}>1. Analyze requirements</div>
+                  <div className={`progress-step ${currentStepIndex >= 1 ? 'active' : ''}`}>2. Search candidates</div>
+                  <div className={`progress-step ${currentStepIndex >= 2 ? 'active' : ''}`}>3. Generate profiles</div>
+                  <div className={`progress-step ${currentStepIndex >= 3 ? 'active' : ''}`}>4. Create templates</div>
+                  <div className={`progress-step ${currentStepIndex >= 4 ? 'active' : ''}`}>5. Final summary</div>
+                </div>
               </div>
             </div>
           )}
@@ -251,28 +310,38 @@ const ChatGPTPage = () => {
           <div ref={messagesEndRef} />
         </div>
         
-        <div className="chat-input-container">
-          <div className="chat-input-wrapper">
-            <textarea
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Describe the job requirements..."
-              disabled={isLoading}
-              rows="1"
-            />
-            <button 
-              className="send-button" 
-              onClick={handleSendMessage}
-              disabled={isLoading || !inputValue.trim()}
-            >
-              Send
-            </button>
+        {/* Show completion message when candidates are delivered */}
+        {candidatesDelivered && (
+          <div className="conversation-complete-message">
+            <p> candidates for this job search have been delivered. You can start a new conversation to search for other candidates.</p>
           </div>
-          <div className="input-hint">
-            Press Enter to send, Shift + Enter for new line
+        )}
+        
+        {/* Chat input - only show if candidates haven't been delivered */}
+        {!candidatesDelivered && (
+          <div className="chat-input-container">
+            <div className="chat-input-wrapper">
+              <textarea
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Describe the job requirements..."
+                disabled={isLoading}
+                rows="1"
+              />
+              <button 
+                className="send-button" 
+                onClick={handleSendMessage}
+                disabled={isLoading || !inputValue.trim()}
+              >
+                Send
+              </button>
+            </div>
+            <div className="input-hint">
+              Press Enter to send, Shift + Enter for new line
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
