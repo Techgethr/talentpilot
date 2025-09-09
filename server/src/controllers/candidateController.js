@@ -10,7 +10,7 @@ const fileProcessingService = require('../services/fileProcessingService');
  */
 async function uploadCV(req, res) {
   try {
-    const { name, email, phone } = req.body;
+    const { name, email, phone, linkedinUrl } = req.body;
     
     // Check if file was uploaded
     if (!req.file) {
@@ -39,6 +39,7 @@ async function uploadCV(req, res) {
       name,
       email: email || null,
       phone: phone || null,
+      linkedinUrl: linkedinUrl || null,
       cvText,
       cvVector
     };
@@ -52,6 +53,60 @@ async function uploadCV(req, res) {
     });
   } catch (error) {
     console.error('Error in uploadCV:', error);
+    res.status(500).json({ error: 'Internal server error: ' + error.message });
+  }
+}
+
+/**
+ * Update candidate information
+ * @param {import('express').Request} req 
+ * @param {import('express').Response} res 
+ */
+async function updateCandidate(req, res) {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, linkedinUrl } = req.body;
+    
+    // Check if candidate exists
+    const existingCandidate = await tidbService.getCandidateById(id);
+    if (!existingCandidate) {
+      return res.status(404).json({ error: 'Candidate not found' });
+    }
+    
+    // Prepare update data - only include fields that are provided
+    const updateData = {};
+    
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    if (linkedinUrl !== undefined) updateData.linkedinUrl = linkedinUrl;
+    
+    // Handle CV file update if provided
+    if (req.file) {
+      // Process the uploaded file to extract text
+      const cvText = await fileProcessingService.processFile(
+        req.file.buffer, 
+        req.file.mimetype
+      );
+      
+      if (cvText && cvText.trim().length > 0) {
+        // Convert CV text to vector
+        const cvVector = await nlpService.textToVector(cvText);
+        
+        updateData.cvText = cvText;
+        updateData.cvVector = cvVector;
+      }
+    }
+    
+    // Update candidate in database
+    await tidbService.updateCandidate(id, updateData);
+    
+    res.json({
+      success: true,
+      message: 'Candidate updated successfully'
+    });
+  } catch (error) {
+    console.error('Error in updateCandidate:', error);
     res.status(500).json({ error: 'Internal server error: ' + error.message });
   }
 }
@@ -102,6 +157,7 @@ async function getAllCandidates(req, res) {
 
 module.exports = {
   uploadCV,
+  updateCandidate,
   getCandidate,
   getAllCandidates
 };

@@ -1,15 +1,18 @@
 // client/src/pages/CandidatesPage.js
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { candidateAPI } from '../services/api';
 import './CandidatesPage.css';
 
 const CandidatesPage = () => {
+  const navigate = useNavigate();
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    linkedinUrl: ''
   });
   const [cvFile, setCvFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,6 +75,7 @@ const CandidatesPage = () => {
       formDataToSend.append('name', formData.name);
       formDataToSend.append('email', formData.email);
       formDataToSend.append('phone', formData.phone);
+      formDataToSend.append('linkedinUrl', formData.linkedinUrl);
       formDataToSend.append('cvFile', cvFile);
 
       await candidateAPI.uploadCV(formDataToSend);
@@ -81,7 +85,8 @@ const CandidatesPage = () => {
       setFormData({
         name: '',
         email: '',
-        phone: ''
+        phone: '',
+        linkedinUrl: ''
       });
       setCvFile(null);
       if (fileInputRef.current) {
@@ -129,7 +134,6 @@ const CandidatesPage = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                required
               />
             </div>
 
@@ -141,6 +145,18 @@ const CandidatesPage = () => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="linkedinUrl">LinkedIn Profile URL</label>
+              <input
+                type="url"
+                id="linkedinUrl"
+                name="linkedinUrl"
+                value={formData.linkedinUrl}
+                onChange={handleChange}
+                placeholder="https://linkedin.com/in/username"
               />
             </div>
 
@@ -191,7 +207,9 @@ const CandidatesPage = () => {
                     <th>Name</th>
                     <th>Email</th>
                     <th>Phone</th>
+                    <th>LinkedIn</th>
                     <th>Uploaded</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -200,7 +218,24 @@ const CandidatesPage = () => {
                       <td>{candidate.name}</td>
                       <td>{candidate.email || '-'}</td>
                       <td>{candidate.phone || '-'}</td>
+                      <td>
+                        {candidate.linkedin_url ? (
+                          <a href={candidate.linkedin_url} target="_blank" rel="noopener noreferrer">
+                            View Profile
+                          </a>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
                       <td>{new Date(candidate.created_at).toLocaleDateString()}</td>
+                      <td>
+                        <button 
+                          className="edit-button"
+                          onClick={() => navigate(`/candidates/${candidate.id}/edit`)}
+                        >
+                          Edit
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

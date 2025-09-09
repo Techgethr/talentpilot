@@ -31,6 +31,9 @@ router.get('/', candidateController.getAllCandidates);
 // POST /candidates/upload - Upload and process candidate CV
 router.post('/upload', upload.single('cvFile'), candidateController.uploadCV);
 
+// PUT /candidates/:id - Update candidate information
+router.put('/:id', upload.single('cvFile'), candidateController.updateCandidate);
+
 // GET /candidates/:id - Get candidate by ID
 router.get('/:id', candidateController.getCandidate);
 

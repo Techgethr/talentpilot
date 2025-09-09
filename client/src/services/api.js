@@ -32,6 +32,14 @@ export const candidateAPI = {
       },
     });
   },
+  updateCandidate: (id, formData) => {
+    // For updates with potential file uploads, use FormData
+    return apiWithFiles.put(`/candidates/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
   getCandidate: (id) => 
     api.get(`/candidates/${id}`),
   getAllCandidates: () => 

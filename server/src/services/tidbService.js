@@ -60,13 +60,14 @@ class TiDBService {
    * Create tables if they don't exist
    */
   async createTables() {
-    // Create candidates table with simplified structure
+    // Create candidates table with simplified structure including LinkedIn field
     const createCandidatesTable = `
       CREATE TABLE IF NOT EXISTS candidates (
         id INT PRIMARY KEY AUTO_INCREMENT,
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE,
         phone VARCHAR(50),
+        linkedin_url TEXT,
         cv_text TEXT,
         cv_vector VECTOR(1536),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -148,14 +149,15 @@ class TiDBService {
    */
   async storeCandidate(candidateData) {
     const sql = `
-      INSERT INTO candidates (name, email, phone, cv_text, cv_vector)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO candidates (name, email, phone, linkedin_url, cv_text, cv_vector)
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
       candidateData.name,
       candidateData.email,
       candidateData.phone,
+      candidateData.linkedinUrl || null,
       candidateData.cvText,
       JSON.stringify(candidateData.cvVector)
     ];
@@ -165,12 +167,75 @@ class TiDBService {
   }
 
   /**
+   * Update candidate information
+   * @param {number} candidateId - Candidate ID
+   * @param {Object} updateData - Fields to update
+   * @returns {Promise<boolean>} - Success status
+   */
+  async updateCandidate(candidateId, updateData) {
+    try {
+      // Build dynamic update query based on provided fields
+      const fields = [];
+      const params = [];
+      
+      // Add fields to update if they exist in updateData
+      if (updateData.name !== undefined) {
+        fields.push('name = ?');
+        params.push(updateData.name);
+      }
+      
+      if (updateData.email !== undefined) {
+        fields.push('email = ?');
+        params.push(updateData.email);
+      }
+      
+      if (updateData.phone !== undefined) {
+        fields.push('phone = ?');
+        params.push(updateData.phone);
+      }
+      
+      if (updateData.linkedinUrl !== undefined) {
+        fields.push('linkedin_url = ?');
+        params.push(updateData.linkedinUrl);
+      }
+      
+      // Only update CV fields if new CV data is provided
+      if (updateData.cvText !== undefined && updateData.cvVector !== undefined) {
+        fields.push('cv_text = ?');
+        params.push(updateData.cvText);
+        fields.push('cv_vector = ?');
+        params.push(JSON.stringify(updateData.cvVector));
+      }
+      
+      // If no fields to update, return early
+      if (fields.length === 0) {
+        return true;
+      }
+      
+      // Add candidate ID to params
+      params.push(candidateId);
+      
+      const sql = `
+        UPDATE candidates 
+        SET ${fields.join(', ')}
+        WHERE id = ?
+      `;
+      
+      await this.executeQuery(sql, params);
+      return true;
+    } catch (error) {
+      console.error('Error updating candidate:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get all candidates
    * @returns {Promise<Array>} - Array of candidates
    */
   async getAllCandidates() {
     const sql = `
-      SELECT id, name, email, phone, created_at
+      SELECT id, name, email, phone, linkedin_url, created_at
       FROM candidates
       ORDER BY created_at DESC
     `;
@@ -186,7 +251,7 @@ class TiDBService {
    */
   async getCandidateById(id) {
     const sql = `
-      SELECT id, name, email, phone, cv_text, created_at, updated_at
+      SELECT id, name, email, phone, linkedin_url, cv_text, created_at, updated_at
       FROM candidates
       WHERE id = ?
     `;
@@ -211,14 +276,15 @@ class TiDBService {
       
       // Use VEC_COSINE_DISTANCE function for vector similarity search
       const sql = `
-        SELECT id, name, email, phone,
-               VEC_COSINE_DISTANCE(cv_vector, CAST(? AS VECTOR(1536))) as similarity
+        SELECT id, name, email, phone, linkedin_url,
+               VEC_COSINE_DISTANCE(cv_vector, CAST(? AS VECTOR(FLOAT, 1536))) as similarity
         FROM candidates
         ORDER BY similarity ASC
-        LIMIT 10
+        LIMIT ?
       `;
 
-      const params = [queryVectorJson];
+      const params = [queryVectorJson, validLimit];
+      console.log('Executing query with params:', params);
       const results = await this.executeQuery(sql, params);
       
       return results.map(candidate => ({
@@ -226,6 +292,7 @@ class TiDBService {
         name: candidate.name,
         email: candidate.email,
         phone: candidate.phone,
+        linkedinUrl: candidate.linkedin_url,
         similarity: candidate.similarity
       }));
     } catch (error) {
@@ -248,7 +315,7 @@ class TiDBService {
     const validLimit = Math.min(Math.max(1, Math.floor(limit)), 100);
     
     const sql = `
-      SELECT id, name, email, phone
+      SELECT id, name, email, phone, linkedin_url
       FROM candidates
       LIMIT ?
     `;
@@ -262,6 +329,7 @@ class TiDBService {
       name: candidate.name,
       email: candidate.email,
       phone: candidate.phone,
+      linkedinUrl: candidate.linkedin_url,
       similarity: 0.5 // Default similarity score
     }));
   }
