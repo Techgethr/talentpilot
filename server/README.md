@@ -1,19 +1,23 @@
-# TalentPilot Chat
+# TalentPilot Chat Server
 
-A ChatGPT-like application for querying candidate CVs stored in a vector database.
+The backend server for the TalentPilot Chat application.
 
 ## Project Structure
 
 ```
-src/
-├── controllers/     # Request handlers
-├── middleware/      # Custom middleware
-├── models/          # Data models
-├── routes/          # API routes
-├── services/        # Business logic
-├── config/          # Configuration files
-├── utils/           # Utility functions
-└── server.js        # Main application entry point
+server/
+├── src/             # Server source code
+│   ├── controllers/ # Request handlers
+│   ├── middleware/  # Custom middleware
+│   ├── models/      # Data models
+│   ├── routes/      # API routes
+│   ├── services/    # Business logic
+│   ├── config/      # Configuration files
+│   ├── utils/       # Utility functions
+│   └── server.js    # Main application entry point
+├── test/            # Server tests
+├── package.json     # Server dependencies
+└── .env             # Environment variables
 ```
 
 ## Setup

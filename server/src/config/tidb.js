@@ -1,6 +1,9 @@
 // src/config/tidb.js
 // Configuration for TiDB Cloud connection
 
+const dotenv = require('dotenv');
+dotenv.config();
+
 const config = {
   tidb: {
     host: process.env.TIDB_HOST || 'localhost',

@@ -71,7 +71,7 @@ class TiDBService {
         experience TEXT,
         education TEXT,
         cv_text TEXT,
-        cv_vector VECTOR(FLOAT, 128),
+        cv_vector VECTOR(128),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
@@ -84,7 +84,7 @@ class TiDBService {
         title VARCHAR(255) NOT NULL,
         description TEXT,
         requirements JSON,
-        job_vector VECTOR(FLOAT, 128),
+        job_vector VECTOR(128),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )

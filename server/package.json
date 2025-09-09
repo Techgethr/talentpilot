@@ -1,7 +1,7 @@
 {
-  "name": "talent-pilot-chat",
+  "name": "talent-pilot-chat-server",
   "version": "1.0.0",
-  "description": "ChatGPT-like application for querying candidate CVs",
+  "description": "Backend server for TalentPilot Chat application",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -13,11 +13,12 @@
     "chat",
     "cv",
     "candidates",
-    "vector-database"
+    "vector-database",
+    "nodejs",
+    "express"
   ],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
