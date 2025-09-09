@@ -15,6 +15,15 @@ src/
 └── index.js         # Entry point
 ```
 
+## Key Features
+
+- **Chat Interface**: ChatGPT-like interface for interacting with the AI recruitment assistant
+- **Conversation Management**: Create, view, and delete conversations
+- **Real-time Progress Tracking**: Visual indicators showing the current step in the candidate search process
+- **Smart Conversation Naming**: Conversations automatically named based on job titles
+- **Conversation Completion**: Input is hidden after candidate delivery to indicate search completion
+- **Responsive Design**: Works on desktop and mobile devices
+
 ## Setup
 
 1. Install dependencies:
@@ -59,9 +68,29 @@ Builds the app for production to the `build` folder.
 
 ### `npm run eject`
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+**Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+
+## Recent Enhancements
+
+### Progress Tracking
+- Real-time progress updates showing the current step in the candidate search process
+- Visual progress bar with 5 distinct steps:
+  1. Analyze requirements
+  2. Search candidates
+  3. Generate profiles
+  4. Create templates
+  5. Final summary
+- Each step is highlighted as it becomes active
+
+### Smart Conversation Naming
+- Conversations are automatically renamed based on job titles after the first response
+- Provides better organization and context for users
+
+### Conversation Completion
+- Input field is hidden after candidate delivery to indicate the search is complete
+- Shows a completion message to inform users that the process is finished
 
 ## Learn More
 

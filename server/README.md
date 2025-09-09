@@ -20,6 +20,14 @@ server/
 └── .env             # Environment variables
 ```
 
+## Key Features
+
+- **AI Agent Coordination**: Orchestrates multiple AI agents for job analysis, candidate search, and profile enhancement
+- **Vector Database Integration**: Uses TiDB Cloud for efficient vector similarity searches
+- **Natural Language Processing**: Processes job descriptions and CVs using OpenAI embeddings
+- **Conversation Management**: Handles conversation creation, message storage, and title updates
+- **RESTful API**: Provides endpoints for chat, candidates, jobs, users, and feedback
+
 ## Setup
 
 1. Install dependencies:
@@ -73,6 +81,12 @@ server/
 - `DELETE /api/users/:id` - Delete user (Admin only)
 - `POST /api/feedback` - Submit feedback on candidate matches
 - `GET /api/feedback/:jobId` - Get feedback for a specific job
+- `GET /api/conversations` - Get all conversations
+- `POST /api/conversations` - Create a new conversation
+- `GET /api/conversations/:id` - Get conversation by ID
+- `PUT /api/conversations/:id/title` - Update conversation title
+- `POST /api/conversations/message` - Send message in conversation
+- `DELETE /api/conversations/:id` - Delete conversation
 
 ## API Documentation
 
@@ -85,6 +99,8 @@ See [API.md](API.md) for detailed API documentation with examples.
 - **tidbService** - Interface with TiDB Cloud for data storage and vector search
 - **candidateController** - Handle candidate-related requests
 - **jobController** - Handle job posting-related requests
+- **agentCoordinator** - Orchestrate multiple AI agents for processing job descriptions
+- **embeddingService** - Generate vector embeddings using OpenAI
 
 ## Database Schema
 
@@ -93,8 +109,9 @@ The application uses the following tables in TiDB:
 1. **candidates** - Stores candidate information and CV vectors
 2. **jobs** - Stores job postings and requirement vectors
 3. **conversations** - Stores chat conversations for analytics
-4. **users** - Stores user information for authentication
-5. **feedback** - Stores feedback on candidate matches
+4. **messages** - Stores individual messages within conversations
+5. **users** - Stores user information for authentication
+6. **feedback** - Stores feedback on candidate matches
 
 ## Development
 
@@ -110,3 +127,37 @@ This project uses:
 - JSON data type for flexible storage of skills and requirements
 - Horizontal scaling capabilities for handling large datasets
 - Built-in security features for data protection
+
+## Recent Enhancements
+
+### Smart Conversation Naming
+- Conversations are automatically renamed based on job titles after the first response
+- The `sendMessage` endpoint now includes logic to update conversation titles
+
+### Conversation Completion Flag
+- API responses now include a `candidatesDelivered` flag to indicate when candidates have been delivered
+- This allows the frontend to hide the input field after candidate delivery
+
+### Enhanced Agent Coordination
+- Improved progress reporting in the agent coordinator
+- More detailed progress updates for better user experience
+
+### New Conversation Title Endpoint
+- Added PUT `/api/conversations/:id/title` endpoint for updating conversation titles
+- Supports dynamic conversation naming based on user actions
+
+## Testing
+
+Run server tests with:
+```bash
+npm test
+```
+
+## Deployment
+
+For production deployment:
+```bash
+npm start
+```
+
+The server will start on the port specified in the `.env` file (default: 3000).
