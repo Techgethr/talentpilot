@@ -11,28 +11,6 @@ const api = axios.create({
   },
 });
 
-// Add a request interceptor to include auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Auth endpoints
-export const authAPI = {
-  login: (email, password) => 
-    api.post('/auth/login', { email, password }),
-  register: (name, email, password, role) => 
-    api.post('/users', { name, email, password, role }),
-};
-
 // Chat endpoints
 export const chatAPI = {
   sendMessage: (message) => 

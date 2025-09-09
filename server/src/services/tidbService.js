@@ -181,7 +181,7 @@ class TiDBService {
     // In a real scenario, you would use vector similarity functions
     const sql = `
       SELECT id, name, email, skills, experience, 
-             COSINE_DISTANCE(cv_vector, ?) as similarity
+             VEC_COSINE_DISTANCE(cv_vector, ?) as similarity
       FROM candidates
       ORDER BY similarity DESC
       LIMIT ?

@@ -1,6 +1,5 @@
 // src/controllers/userController.js
 const tidbService = require('../services/tidbService');
-const { authorize } = require('../middleware/auth');
 
 /**
  * Create a new user
@@ -9,11 +8,6 @@ const { authorize } = require('../middleware/auth');
  */
 async function createUser(req, res) {
   try {
-    // Only admins can create users
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can create users' });
-    }
-    
     const { name, email, role } = req.body;
     
     if (!name || !email) {
@@ -81,11 +75,6 @@ async function updateUser(req, res) {
     const { id } = req.params;
     const { name, email, role } = req.body;
     
-    // Users can only update their own profile, admins can update any
-    if (req.user.id != id && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Can only update your own profile' });
-    }
-    
     // Check if user exists
     const checkSql = 'SELECT id FROM users WHERE id = ?';
     const users = await tidbService.executeQuery(checkSql, [id]);
@@ -127,11 +116,6 @@ async function updateUser(req, res) {
 async function deleteUser(req, res) {
   try {
     const { id } = req.params;
-    
-    // Only admins can delete users
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can delete users' });
-    }
     
     // Check if user exists
     const checkSql = 'SELECT id FROM users WHERE id = ?';

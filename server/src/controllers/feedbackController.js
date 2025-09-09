@@ -8,8 +8,7 @@ const tidbService = require('../services/tidbService');
  */
 async function submitFeedback(req, res) {
   try {
-    const { jobId, candidateId, rating, comment } = req.body;
-    const userId = req.user.id;
+    const { jobId, candidateId, rating, comment, userId } = req.body;
     
     if (!jobId || !candidateId || !rating) {
       return res.status(400).json({ error: 'Job ID, candidate ID, and rating are required' });
@@ -31,13 +30,16 @@ async function submitFeedback(req, res) {
       return res.status(404).json({ error: 'Candidate not found' });
     }
     
+    // Use a default user ID if not provided
+    const feedbackUserId = userId || 1;
+    
     // Insert feedback
     const sql = `
       INSERT INTO feedback (job_id, candidate_id, user_id, rating, comment)
       VALUES (?, ?, ?, ?, ?)
     `;
     
-    const params = [jobId, candidateId, userId, rating, comment || null];
+    const params = [jobId, candidateId, feedbackUserId, rating, comment || null];
     const result = await tidbService.executeQuery(sql, params);
     
     res.status(201).json({

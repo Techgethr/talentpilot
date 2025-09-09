@@ -8,7 +8,6 @@ const userRoutes = require('./routes/userRoutes');
 const feedbackRoutes = require('./routes/feedbackRoutes');
 const tidbService = require('./services/tidbService');
 const requestLogger = require('./middleware/logger');
-const { authenticate } = require('./middleware/auth');
 
 // Load environment variables
 dotenv.config();
@@ -22,14 +21,12 @@ app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
 
-// Public routes
+// Public routes - All routes are now public
 app.use('/api/chat', chatRoutes);
-
-// Protected routes
-app.use('/api/candidates', authenticate, candidateRoutes);
-app.use('/api/jobs', authenticate, jobRoutes);
-app.use('/api/users', authenticate, userRoutes);
-app.use('/api/feedback', authenticate, feedbackRoutes);
+app.use('/api/candidates', candidateRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
