@@ -7,7 +7,6 @@ import HomePage from './pages/HomePage';
 import ChatGPTPage from './pages/ChatGPTPage';
 import CandidatesPage from './pages/CandidatesPage';
 import EditCandidatePage from './pages/EditCandidatePage';
-import JobsPage from './pages/JobsPage';
 import Header from './components/Header';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -33,11 +32,6 @@ function App() {
               <Route path="/candidates/:id/edit" element={
                 <ProtectedRoute>
                   <EditCandidatePage />
-                </ProtectedRoute>
-              } />
-              <Route path="/jobs" element={
-                <ProtectedRoute>
-                  <JobsPage />
                 </ProtectedRoute>
               } />
             </Routes>

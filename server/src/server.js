@@ -3,7 +3,6 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const chatRoutes = require('./routes/chatRoutes');
 const candidateRoutes = require('./routes/candidateRoutes');
-const jobRoutes = require('./routes/jobRoutes');
 const userRoutes = require('./routes/userRoutes');
 const feedbackRoutes = require('./routes/feedbackRoutes');
 const conversationRoutes = require('./routes/conversationRoutes');
@@ -25,7 +24,6 @@ app.use(requestLogger);
 // Public routes - All routes are now public
 app.use('/api/chat', chatRoutes);
 app.use('/api/candidates', candidateRoutes);
-app.use('/api/jobs', jobRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/conversations', conversationRoutes);
