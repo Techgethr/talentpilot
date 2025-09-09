@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import './App.css';
 import HomePage from './pages/HomePage';
-import ChatPage from './pages/ChatPage';
+import ChatGPTPage from './pages/ChatGPTPage';
 import CandidatesPage from './pages/CandidatesPage';
 import EditCandidatePage from './pages/EditCandidatePage';
 import JobsPage from './pages/JobsPage';
@@ -22,7 +22,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/chat" element={
                 <ProtectedRoute>
-                  <ChatPage />
+                  <ChatGPTPage />
                 </ProtectedRoute>
               } />
               <Route path="/candidates" element={

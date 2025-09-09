@@ -92,12 +92,22 @@ class TiDBService {
     const createConversationsTable = `
       CREATE TABLE IF NOT EXISTS conversations (
         id INT PRIMARY KEY AUTO_INCREMENT,
+        title VARCHAR(255),
         user_id VARCHAR(255),
-        job_id INT,
-        message TEXT,
-        response TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (job_id) REFERENCES jobs(id)
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `;
+
+    // Create messages table
+    const createMessagesTable = `
+      CREATE TABLE IF NOT EXISTS messages (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        conversation_id INT NOT NULL,
+        role ENUM('user', 'assistant') NOT NULL,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
       )
     `;
 
@@ -133,6 +143,7 @@ class TiDBService {
       await this.executeQuery(createCandidatesTable);
       await this.executeQuery(createJobsTable);
       await this.executeQuery(createConversationsTable);
+      await this.executeQuery(createMessagesTable);
       await this.executeQuery(createUsersTable);
       await this.executeQuery(createFeedbackTable);
       console.log('Tables created successfully');
@@ -277,14 +288,14 @@ class TiDBService {
       // Use VEC_COSINE_DISTANCE function for vector similarity search
       const sql = `
         SELECT id, name, email, phone, linkedin_url,
-               VEC_COSINE_DISTANCE(cv_vector, CAST(? AS VECTOR(FLOAT, 1536))) as similarity
+               VEC_COSINE_DISTANCE(cv_vector, CAST(? AS VECTOR(1536))) as similarity
         FROM candidates
         ORDER BY similarity ASC
-        LIMIT ?
+        LIMIT 10
       `;
 
-      const params = [queryVectorJson, validLimit];
-      console.log('Executing query with params:', params);
+      const params = [queryVectorJson];
+      //console.log('Executing query with params:', params);
       const results = await this.executeQuery(sql, params);
       
       return results.map(candidate => ({
@@ -332,6 +343,124 @@ class TiDBService {
       linkedinUrl: candidate.linkedin_url,
       similarity: 0.5 // Default similarity score
     }));
+  }
+  
+  /**
+   * Create a new conversation
+   * @param {string} title - Conversation title
+   * @param {string} userId - User ID (optional)
+   * @returns {Promise<number>} - Created conversation ID
+   */
+  async createConversation(title, userId = null) {
+    const sql = `
+      INSERT INTO conversations (title, user_id)
+      VALUES (?, ?)
+    `;
+    
+    const params = [title, userId];
+    const result = await this.executeQuery(sql, params);
+    return result.insertId;
+  }
+  
+  /**
+   * Get all conversations
+   * @returns {Promise<Array>} - Array of conversations
+   */
+  async getAllConversations() {
+    const sql = `
+      SELECT id, title, user_id, created_at, updated_at
+      FROM conversations
+      ORDER BY updated_at DESC
+    `;
+    
+    const results = await this.executeQuery(sql);
+    return results;
+  }
+  
+  /**
+   * Get conversation by ID
+   * @param {number} id - Conversation ID
+   * @returns {Promise<Object>} - Conversation data
+   */
+  async getConversationById(id) {
+    const sql = `
+      SELECT id, title, user_id, created_at, updated_at
+      FROM conversations
+      WHERE id = ?
+    `;
+    
+    const results = await this.executeQuery(sql, [id]);
+    return results.length > 0 ? results[0] : null;
+  }
+  
+  /**
+   * Update conversation title
+   * @param {number} id - Conversation ID
+   * @param {string} title - New title
+   * @returns {Promise<boolean>} - Success status
+   */
+  async updateConversationTitle(id, title) {
+    const sql = `
+      UPDATE conversations
+      SET title = ?
+      WHERE id = ?
+    `;
+    
+    const params = [title, id];
+    await this.executeQuery(sql, params);
+    return true;
+  }
+  
+  /**
+   * Add message to conversation
+   * @param {number} conversationId - Conversation ID
+   * @param {string} role - Message role (user/assistant)
+   * @param {string} content - Message content
+   * @returns {Promise<number>} - Created message ID
+   */
+  async addMessage(conversationId, role, content) {
+    const sql = `
+      INSERT INTO messages (conversation_id, role, content)
+      VALUES (?, ?, ?)
+    `;
+    
+    const params = [conversationId, role, content];
+    const result = await this.executeQuery(sql, params);
+    return result.insertId;
+  }
+  
+  /**
+   * Get messages for conversation
+   * @param {number} conversationId - Conversation ID
+   * @returns {Promise<Array>} - Array of messages
+   */
+  async getMessagesByConversationId(conversationId) {
+    const sql = `
+      SELECT id, conversation_id, role, content, created_at
+      FROM messages
+      WHERE conversation_id = ?
+      ORDER BY created_at ASC
+    `;
+    
+    const params = [conversationId];
+    const results = await this.executeQuery(sql, params);
+    return results;
+  }
+  
+  /**
+   * Delete conversation
+   * @param {number} id - Conversation ID
+   * @returns {Promise<boolean>} - Success status
+   */
+  async deleteConversation(id) {
+    const sql = `
+      DELETE FROM conversations
+      WHERE id = ?
+    `;
+    
+    const params = [id];
+    await this.executeQuery(sql, params);
+    return true;
   }
 }
 

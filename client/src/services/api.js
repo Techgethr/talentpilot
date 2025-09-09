@@ -22,6 +22,20 @@ export const chatAPI = {
     api.post('/chat', { message }),
 };
 
+// Conversation endpoints
+export const conversationAPI = {
+  getAllConversations: () => 
+    api.get('/conversations'),
+  getConversation: (id) => 
+    api.get(`/conversations/${id}`),
+  createConversation: (title) => 
+    api.post('/conversations', { title }),
+  sendMessage: (data) => 
+    api.post('/conversations/message', data),
+  deleteConversation: (id) => 
+    api.delete(`/conversations/${id}`),
+};
+
 // Candidate endpoints
 export const candidateAPI = {
   uploadCV: (formData) => {

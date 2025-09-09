@@ -6,6 +6,7 @@ const candidateRoutes = require('./routes/candidateRoutes');
 const jobRoutes = require('./routes/jobRoutes');
 const userRoutes = require('./routes/userRoutes');
 const feedbackRoutes = require('./routes/feedbackRoutes');
+const conversationRoutes = require('./routes/conversationRoutes');
 const tidbService = require('./services/tidbService');
 const requestLogger = require('./middleware/logger');
 
@@ -27,6 +28,7 @@ app.use('/api/candidates', candidateRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/conversations', conversationRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
