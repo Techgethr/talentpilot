@@ -11,21 +11,28 @@ const ChatGPTPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [processingStep, setProcessingStep] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [conversationStates, setConversationStates] = useState({}); // Track state per conversation
+  const [processingSteps, setProcessingSteps] = useState([
+    'Analyzing job requirements...',
+    'Searching for candidates...',
+    'Generating candidate profiles...',
+    'Creating communication templates...',
+    'Generating final summary...'
+  ]);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [newTitle, setNewTitle] = useState('');
   const messagesEndRef = useRef(null);
-
+  
   // Load conversations when component mounts
   useEffect(() => {
     loadConversations();
   }, []);
-
   // Scroll to bottom of messages when messages change
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, processingStep]);
-
-  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, [messages, processingStep]);
 
   const loadConversations = async () => {
     try {
@@ -36,39 +43,6 @@ const ChatGPTPage = () => {
     }
   };
 
-  const loadConversation = async (conversationId) => {
-    try {
-      const response = await conversationAPI.getConversation(conversationId);
-      setCurrentConversation(response.data.data);
-      setMessages(response.data.data.messages || []);
-    } catch (error) {
-      console.error('Error loading conversation:', error);
-    }
-  };
-
-  const createNewConversation = async () => {
-    try {
-      const response = await conversationAPI.createConversation('New Conversation');
-      const newConversation = response.data.data;
-      
-      setConversations([newConversation, ...conversations]);
-      setCurrentConversation(newConversation);
-      setMessages([]);
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-    }
-  };
-
-  const [candidatesDelivered, setCandidatesDelivered] = useState(false);
-  const [processingSteps, setProcessingSteps] = useState([
-    'Analyzing job requirements...',
-    'Searching for candidates...',
-    'Generating candidate profiles...',
-    'Creating communication templates...',
-    'Generating final summary...'
-  ]);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
@@ -76,8 +50,18 @@ const ChatGPTPage = () => {
       setIsLoading(true);
       setProcessingStep('Analyzing job requirements...');
       setCurrentStepIndex(0);
-      setCandidatesDelivered(false); // Reset the flag when sending a new message
       
+      // Reset the candidates delivered state for current conversation when sending a new message
+      if (currentConversation && currentConversation.id) {
+        setConversationStates(prev => ({
+          ...prev,
+          [currentConversation.id]: {
+            ...prev[currentConversation.id],
+            candidatesDelivered: false
+          }
+        }));
+      }
+
       // Add user message to UI immediately
       const userMessage = {
         id: Date.now(),
@@ -98,6 +82,9 @@ const ChatGPTPage = () => {
         'Generating final summary...'
       ];
       
+      // Capture the current conversation ID before making the API call
+      const conversationId = currentConversation?.id;
+      
       let stepIndex = 0;
       const progressInterval = setInterval(() => {
         if (stepIndex < steps.length - 1) {
@@ -112,7 +99,7 @@ const ChatGPTPage = () => {
       // Send message to API
       const requestData = {
         message: inputValue,
-        conversationId: currentConversation?.id
+        conversationId: conversationId
       };
       
       const response = await conversationAPI.sendMessage(requestData);
@@ -137,10 +124,15 @@ const ChatGPTPage = () => {
         
         setMessages(response.data.data.conversation.messages);
         
-        // Check if candidates were delivered
-        if (response.data.data.candidatesDelivered) {
-          setCandidatesDelivered(true);
-        }
+        // Set candidatesDelivered to true for current conversation
+        // This indicates the search process is complete for this conversation
+        setConversationStates(prev => ({
+          ...prev,
+          [response.data.data.conversation.id]: {
+            ...prev[response.data.data.conversation.id],
+            candidatesDelivered: true
+          }
+        }));
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -186,6 +178,70 @@ const ChatGPTPage = () => {
       console.error('Error deleting conversation:', error);
     }
   };
+  
+  const openRenameModal = (conversation) => {
+    setSelectedConversation(conversation);
+    setNewTitle(conversation.title);
+    setRenameModalOpen(true);
+  };
+  
+  const closeRenameModal = () => {
+    setRenameModalOpen(false);
+    setSelectedConversation(null);
+    setNewTitle('');
+  };
+
+  const handleRenameSubmit = async (e) => {
+    e.preventDefault();
+    if (selectedConversation && newTitle.trim()) {
+      await renameConversation(selectedConversation.id, newTitle.trim());
+      closeRenameModal();
+    }
+  };
+
+  const createNewConversation = async () => {
+    try {
+      const response = await conversationAPI.createConversation('New Conversation');
+      const newConversation = response.data.data;
+      
+      setConversations([newConversation, ...conversations]);
+      setCurrentConversation(newConversation);
+      setMessages([]);
+      // Don't need to explicitly set candidatesDelivered to false for new conversation
+      // since it won't exist in conversationStates yet
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+    }
+  };
+
+  const loadConversation = async (conversationId) => {
+    try {
+      const response = await conversationAPI.getConversation(conversationId);
+      setCurrentConversation(response.data.data);
+      setMessages(response.data.data.messages || []);
+      // Don't reset candidatesDelivered here, keep the state for this conversation
+    } catch (error) {
+      console.error('Error loading conversation:', error);
+    }
+  };
+
+  const renameConversation = async (conversationId, newTitle) => {
+    try {
+      await conversationAPI.updateConversationTitle(conversationId, newTitle);
+      
+      // Update the conversation in the list
+      setConversations(prev => prev.map(conv => 
+        conv.id === conversationId ? { ...conv, title: newTitle } : conv
+      ));
+      
+      // If this is the current conversation, update it too
+      if (currentConversation && currentConversation.id === conversationId) {
+        setCurrentConversation(prev => ({ ...prev, title: newTitle }));
+      }
+    } catch (error) {
+      console.error('Error renaming conversation:', error);
+    }
+  };
 
   // Function to format markdown-like content
   const formatMessageContent = (content) => {
@@ -226,6 +282,7 @@ const ChatGPTPage = () => {
               key={conversation.id} 
               className={`conversation-item ${currentConversation && currentConversation.id === conversation.id ? 'active' : ''}`}
               onClick={() => loadConversation(conversation.id)}
+              onDoubleClick={() => openRenameModal(conversation)}
             >
               <div className="conversation-title">
                 {conversation.title}
@@ -234,6 +291,15 @@ const ChatGPTPage = () => {
                 <span className="conversation-date">
                   {new Date(conversation.updated_at).toLocaleDateString()}
                 </span>
+                <button 
+                  className="rename-conversation-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openRenameModal(conversation);
+                  }}
+                >
+                  ✏️
+                </button>
                 <button 
                   className="delete-conversation-btn"
                   onClick={(e) => {
@@ -260,6 +326,33 @@ const ChatGPTPage = () => {
           </button>
           <h2>{currentConversation ? currentConversation.title : 'TalentPilot Chat'}</h2>
         </div>
+        
+        {/* Rename Conversation Modal */}
+        {renameModalOpen && (
+          <div className="modal-overlay" onClick={closeRenameModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <h3>Rename Conversation</h3>
+              <form onSubmit={handleRenameSubmit}>
+                <input
+                  type="text"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="Enter new conversation name"
+                  className="modal-input"
+                  autoFocus
+                />
+                <div className="modal-actions">
+                  <button type="button" onClick={closeRenameModal} className="modal-cancel-btn">
+                    Cancel
+                  </button>
+                  <button type="submit" className="modal-submit-btn" disabled={!newTitle.trim()}>
+                    Save
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
         
         <div className="chat-messages">
           {messages.length === 0 ? (
@@ -311,14 +404,14 @@ const ChatGPTPage = () => {
         </div>
         
         {/* Show completion message when candidates are delivered */}
-        {candidatesDelivered && (
+        {currentConversation && currentConversation.id && conversationStates[currentConversation.id] && conversationStates[currentConversation.id].candidatesDelivered && (
           <div className="conversation-complete-message">
-            <p> candidates for this job search have been delivered. You can start a new conversation to search for other candidates.</p>
+            <p>Candidates for this job search have been delivered. You can start a new conversation to search for other candidates.</p>
           </div>
         )}
         
-        {/* Chat input - only show if candidates haven't been delivered */}
-        {!candidatesDelivered && (
+        {/* Chat input - only show if candidates haven't been delivered for current conversation */}
+        {!(currentConversation && currentConversation.id && conversationStates[currentConversation.id] && conversationStates[currentConversation.id].candidatesDelivered) && (
           <div className="chat-input-container">
             <div className="chat-input-wrapper">
               <textarea

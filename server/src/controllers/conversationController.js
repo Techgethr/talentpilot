@@ -129,6 +129,9 @@ async function sendMessage(req, res) {
     // Get all messages for the conversation
     const messages = await tidbService.getMessagesByConversationId(conversation.id);
     
+    // Check if the search process is complete (regardless of whether candidates were found)
+    const searchComplete = result.hasOwnProperty('candidates');
+    
     res.json({
       success: true,
       data: {
@@ -137,7 +140,7 @@ async function sendMessage(req, res) {
           messages
         },
         agentResult: result,
-        candidatesDelivered: result.candidates && result.candidates.length > 0
+        candidatesDelivered: searchComplete
       }
     });
   } catch (error) {
