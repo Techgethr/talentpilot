@@ -23,6 +23,7 @@ const ChatGPTPage = () => {
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [newTitle, setNewTitle] = useState('');
+  const [feedbackMode, setFeedbackMode] = useState(false);
   const messagesEndRef = useRef(null);
   
   // Load conversations when component mounts
@@ -199,6 +200,49 @@ const ChatGPTPage = () => {
     }
   };
 
+  const sendFeedback = async () => {
+    if (!inputValue.trim() || isLoading || !currentConversation) return;
+
+    try {
+      setIsLoading(true);
+      setProcessingStep('Processing feedback...');
+      
+      // Add user feedback message to UI immediately
+      const userMessage = {
+        id: Date.now(),
+        role: 'user',
+        content: inputValue,
+        created_at: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, userMessage]);
+      setInputValue('');
+      
+      // Send feedback to API
+      const response = await conversationAPI.sendFeedback(currentConversation.id, inputValue);
+      
+      // Update conversation and messages
+      if (response.data.data.conversation) {
+        setMessages(response.data.data.conversation.messages);
+      }
+    } catch (error) {
+      console.error('Error sending feedback:', error);
+      
+      // Add error message to UI
+      const errorMessage = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        content: 'Sorry, I encountered an error processing your feedback. Please try again.',
+        created_at: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+      setProcessingStep('');
+    }
+  };
+
   const createNewConversation = async () => {
     try {
       const response = await conversationAPI.createConversation('New Conversation');
@@ -289,7 +333,7 @@ const ChatGPTPage = () => {
               </div>
               <div className="conversation-meta">
                 <span className="conversation-date">
-                  {new Date(conversation.updated_at).toLocaleDateString()}
+                  {conversation.updated_at ? new Date(conversation.updated_at).toLocaleDateString() : new Date().toLocaleDateString()}
                 </span>
                 <button 
                   className="rename-conversation-btn"
@@ -407,31 +451,48 @@ const ChatGPTPage = () => {
         {currentConversation && currentConversation.id && conversationStates[currentConversation.id] && conversationStates[currentConversation.id].candidatesDelivered && (
           <div className="conversation-complete-message">
             <p>Candidates for this job search have been delivered. You can start a new conversation to search for other candidates.</p>
+            <button 
+              className="feedback-toggle-btn"
+              onClick={() => setFeedbackMode(!feedbackMode)}
+            >
+              {feedbackMode ? 'Back to Search' : 'Provide Feedback'}
+            </button>
           </div>
         )}
         
-        {/* Chat input - only show if candidates haven't been delivered for current conversation */}
-        {!(currentConversation && currentConversation.id && conversationStates[currentConversation.id] && conversationStates[currentConversation.id].candidatesDelivered) && (
+        {/* Chat input - only show if candidates haven't been delivered for current conversation or in feedback mode */}
+        {(!(currentConversation && currentConversation.id && conversationStates[currentConversation.id] && conversationStates[currentConversation.id].candidatesDelivered) || feedbackMode) && (
           <div className="chat-input-container">
             <div className="chat-input-wrapper">
               <textarea
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Describe the job requirements..."
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (feedbackMode) {
+                      sendFeedback();
+                    } else {
+                      handleSendMessage();
+                    }
+                  }
+                }}
+                placeholder={feedbackMode ? "Provide feedback on the candidates or job description..." : "Describe the job requirements..."}
                 disabled={isLoading}
                 rows="1"
               />
               <button 
                 className="send-button" 
-                onClick={handleSendMessage}
+                onClick={feedbackMode ? sendFeedback : handleSendMessage}
                 disabled={isLoading || !inputValue.trim()}
               >
-                Send
+                {feedbackMode ? 'Send Feedback' : 'Send'}
               </button>
             </div>
             <div className="input-hint">
-              Press Enter to send, Shift + Enter for new line
+              {feedbackMode 
+                ? 'Press Enter to send feedback, Shift + Enter for new line' 
+                : 'Press Enter to send, Shift + Enter for new line'}
             </div>
           </div>
         )}

@@ -19,6 +19,9 @@ router.put('/:id/title', conversationController.updateConversationTitle);
 // POST /conversations/message - Send message in conversation
 router.post('/message', conversationController.sendMessage);
 
+// POST /conversations/:id/feedback - Provide feedback on conversation
+router.post('/:id/feedback', conversationController.provideFeedback);
+
 // DELETE /conversations/:id - Delete conversation
 router.delete('/:id', conversationController.deleteConversation);
 

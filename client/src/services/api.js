@@ -34,6 +34,8 @@ export const conversationAPI = {
     api.put(`/conversations/${id}/title`, { title }),
   sendMessage: (data) => 
     api.post('/conversations/message', data),
+  sendFeedback: (conversationId, feedback) => 
+    api.post(`/conversations/${conversationId}/feedback`, { feedback }),
   deleteConversation: (id) => 
     api.delete(`/conversations/${id}`),
 }

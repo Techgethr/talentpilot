@@ -5,6 +5,7 @@ const jobAnalysisAgent = require('./jobAnalysisAgent');
 const candidateSearchAgent = require('./candidateSearchAgent');
 const profileSummaryAgent = require('./profileSummaryAgent');
 const communicationAgent = require('./communicationAgent');
+const feedbackAgent = require('./feedbackAgent');
 
 class AgentCoordinator {
   /**
@@ -114,6 +115,75 @@ We have an opportunity that might interest you.`
     } catch (error) {
       console.error('Error in AgentCoordinator:', error);
       throw new Error('Failed to process job description: ' + error.message);
+    }
+  }
+
+  /**
+   * Process feedback request for an existing conversation
+   * @param {Object} conversationContext - Context from the conversation including job requirements and candidates
+   * @param {string} userFeedback - User's specific feedback request
+   * @returns {Promise<Object>} - Feedback response
+   */
+  async processFeedbackRequest(conversationContext, userFeedback) {
+    try {
+      console.log('Processing feedback request...');
+      
+      // Use the feedback agent to provide HR feedback
+      const feedbackResponse = await feedbackAgent.provideFeedback(
+        conversationContext, 
+        userFeedback
+      );
+      
+      return {
+        success: true,
+        feedback: feedbackResponse.feedback,
+        type: 'feedback_response'
+      };
+    } catch (error) {
+      console.error('Error in feedback processing:', error);
+      throw new Error('Failed to process feedback request: ' + error.message);
+    }
+  }
+
+  /**
+   * Provide candidate selection feedback
+   * @param {Object} conversationContext - Context from the conversation
+   * @returns {Promise<Object>} - Candidate selection feedback
+   */
+  async provideCandidateSelectionFeedback(conversationContext) {
+    try {
+      console.log('Providing candidate selection feedback...');
+      
+      // Use the feedback agent to provide candidate selection feedback
+      const feedbackResponse = await feedbackAgent.provideCandidateSelectionFeedback(
+        conversationContext
+      );
+      
+      return feedbackResponse;
+    } catch (error) {
+      console.error('Error in candidate selection feedback:', error);
+      throw new Error('Failed to provide candidate selection feedback: ' + error.message);
+    }
+  }
+
+  /**
+   * Provide job description feedback
+   * @param {Object} conversationContext - Context from the conversation
+   * @returns {Promise<Object>} - Job description feedback
+   */
+  async provideJobDescriptionFeedback(conversationContext) {
+    try {
+      console.log('Providing job description feedback...');
+      
+      // Use the feedback agent to provide job description feedback
+      const feedbackResponse = await feedbackAgent.provideJobDescriptionFeedback(
+        conversationContext
+      );
+      
+      return feedbackResponse;
+    } catch (error) {
+      console.error('Error in job description feedback:', error);
+      throw new Error('Failed to provide job description feedback: ' + error.message);
     }
   }
 

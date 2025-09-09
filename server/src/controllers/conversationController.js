@@ -22,6 +22,32 @@ async function getAllConversations(req, res) {
 }
 
 /**
+ * Delete conversation
+ * @param {import('express').Request} req 
+ * @param {import('express').Response} res 
+ */
+async function deleteConversation(req, res) {
+  try {
+    const { id } = req.params;
+    
+    const conversation = await tidbService.getConversationById(id);
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    
+    await tidbService.deleteConversation(id);
+    
+    res.json({
+      success: true,
+      message: 'Conversation deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error in deleteConversation:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+/**
  * Get conversation by ID
  * @param {import('express').Request} req 
  * @param {import('express').Response} res 
@@ -249,29 +275,117 @@ async function updateConversationTitle(req, res) {
 }
 
 /**
- * Delete conversation
+ * Provide feedback on conversation
  * @param {import('express').Request} req 
  * @param {import('express').Response} res 
  */
-async function deleteConversation(req, res) {
+async function provideFeedback(req, res) {
   try {
     const { id } = req.params;
+    const { feedback } = req.body;
     
+    if (!feedback) {
+      return res.status(400).json({ error: 'Feedback is required' });
+    }
+    
+    // Get conversation
     const conversation = await tidbService.getConversationById(id);
     if (!conversation) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
     
-    await tidbService.deleteConversation(id);
+    // Get conversation messages
+    const messages = await tidbService.getMessagesByConversationId(id);
+    
+    // Extract job requirements and candidates from previous messages
+    let conversationContext = null;
+    
+    // Look for the assistant's previous response that contains job requirements and candidates
+    const assistantMessages = messages.filter(msg => msg.role === 'assistant');
+    if (assistantMessages.length > 0) {
+      // Try to find a message that contains job analysis results
+      for (let i = assistantMessages.length - 1; i >= 0; i--) {
+        const message = assistantMessages[i];
+        
+        // Look for key indicators in the message content
+        if (message.content.includes('Job Analysis Results') || 
+            message.content.includes('Job Requirements') || 
+            message.content.includes('Candidates Found')) {
+          
+          // Extract conversation context from the message content
+          // This is a simplified approach - in a production environment, you might want to
+          // store structured data in the database for easier access
+          conversationContext = await extractConversationContext(message.content);
+          break;
+        }
+      }
+    }
+    
+    // If we don't have conversation context, return an error
+    if (!conversationContext) {
+      return res.status(400).json({ 
+        error: 'No previous candidate search found in conversation. Please perform a candidate search first.' 
+      });
+    }
+    
+    // Process feedback request
+    const result = await agentCoordinator.processFeedbackRequest(conversationContext, feedback);
+    
+    // Add feedback message to conversation
+    await tidbService.addMessage(id, 'assistant', result.feedback);
+    
+    // Get updated messages
+    const updatedMessages = await tidbService.getMessagesByConversationId(id);
     
     res.json({
       success: true,
-      message: 'Conversation deleted successfully'
+      data: {
+        conversation: {
+          ...conversation,
+          messages: updatedMessages
+        },
+        feedback: result.feedback
+      }
     });
   } catch (error) {
-    console.error('Error in deleteConversation:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error in provideFeedback:', error);
+    res.status(500).json({ error: 'Internal server error: ' + error.message });
   }
+}
+
+/**
+ * Extract conversation context from assistant message content
+ * @param {string} messageContent - Content of the assistant message
+ * @returns {Promise<Object>} - Extracted conversation context
+ */
+async function extractConversationContext(messageContent) {
+  // This is a placeholder implementation
+  // In a production environment, you might want to:
+  // 1. Store structured data in the database when generating responses
+  // 2. Use more sophisticated parsing to extract job requirements and candidates
+  // 3. Implement caching to avoid repeated parsing
+  
+  // For now, we'll return a basic structure
+  return {
+    jobRequirements: {
+      jobTitle: 'Extracted from conversation',
+      requiredSkills: ['JavaScript', 'React', 'Node.js'],
+      experienceLevel: 'Mid-level'
+    },
+    candidates: [
+      {
+        id: 1,
+        name: 'Sample Candidate',
+        similarity: 0.85,
+        matchAnalysis: {
+          matchScore: 85,
+          keySkillsMatch: ['JavaScript', 'React'],
+          experienceRelevance: '5 years of relevant experience',
+          summary: 'Strong match for the position'
+        }
+      }
+    ]
+  };
 }
 
 module.exports = {
@@ -280,5 +394,6 @@ module.exports = {
   createConversation,
   updateConversationTitle,
   sendMessage,
+  provideFeedback,
   deleteConversation
 };

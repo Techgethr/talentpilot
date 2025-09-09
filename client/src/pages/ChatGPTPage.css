@@ -390,6 +390,21 @@
   font-style: italic;
 }
 
+.feedback-toggle-btn {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.feedback-toggle-btn:hover {
+  background-color: #2980b9;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .sidebar {
