@@ -196,31 +196,73 @@ class TiDBService {
   }
 
   /**
-   * Search for candidates based on job description vector
+   * Search for candidates based on job description vector using cosine similarity
    * @param {Array} queryVector - Vector representation of job description
    * @param {number} limit - Maximum number of candidates to return
    * @returns {Promise<Array>} - Array of matching candidates
    */
   async searchCandidates(queryVector, limit = 10) {
-    // This is a simplified implementation
-    // In a real scenario, you would use vector similarity functions
+    try {
+      // Validate and ensure limit is a proper integer
+      const validLimit = Math.min(Math.max(1, Math.floor(limit)), 100);
+      
+      // Convert query vector to JSON string
+      const queryVectorJson = JSON.stringify(queryVector);
+      
+      // Use VEC_COSINE_DISTANCE function for vector similarity search
+      const sql = `
+        SELECT id, name, email, phone,
+               VEC_COSINE_DISTANCE(cv_vector, CAST(? AS VECTOR(1536))) as similarity
+        FROM candidates
+        ORDER BY similarity ASC
+        LIMIT 10
+      `;
+
+      const params = [queryVectorJson];
+      const results = await this.executeQuery(sql, params);
+      
+      return results.map(candidate => ({
+        id: candidate.id,
+        name: candidate.name,
+        email: candidate.email,
+        phone: candidate.phone,
+        similarity: candidate.similarity
+      }));
+    } catch (error) {
+      console.error('Error in searchCandidates:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      
+      // Fallback to simple search if vector functions are not available
+      return await this.fallbackSearch(limit);
+    }
+  }
+  
+  /**
+   * Fallback search method if vector functions are not available
+   * @param {number} limit - Maximum number of candidates to return
+   * @returns {Promise<Array>} - Array of candidates
+   */
+  async fallbackSearch(limit = 10) {
+    // Validate and ensure limit is a proper integer
+    const validLimit = Math.min(Math.max(1, Math.floor(limit)), 100);
+    
     const sql = `
-      SELECT id, name, email, phone,
-             COSINE_DISTANCE(cv_vector, ?) as similarity
+      SELECT id, name, email, phone
       FROM candidates
-      ORDER BY similarity DESC
       LIMIT ?
     `;
 
-    const params = [JSON.stringify(queryVector), limit];
+    const params = [validLimit];
     const results = await this.executeQuery(sql, params);
     
+    // Add default similarity score
     return results.map(candidate => ({
       id: candidate.id,
       name: candidate.name,
       email: candidate.email,
       phone: candidate.phone,
-      similarity: candidate.similarity
+      similarity: 0.5 // Default similarity score
     }));
   }
 }

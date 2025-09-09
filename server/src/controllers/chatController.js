@@ -1,5 +1,5 @@
 // src/controllers/chatController.js
-const chatService = require('../services/chatService');
+const agentCoordinator = require('../services/agents/agentCoordinator');
 
 /**
  * Handle chat message
@@ -14,8 +14,8 @@ async function handleMessage(req, res) {
       return res.status(400).json({ error: 'Message is required' });
     }
     
-    // Process the message and get relevant candidates
-    const result = await chatService.processMessage(message);
+    // Process the job description and find matching candidates
+    const result = await agentCoordinator.processJobDescription(message);
     
     res.json({
       success: true,
@@ -23,7 +23,10 @@ async function handleMessage(req, res) {
     });
   } catch (error) {
     console.error('Error in handleMessage:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error: ' + error.message 
+    });
   }
 }
 
