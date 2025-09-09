@@ -65,14 +65,11 @@ async function getCandidate(req, res) {
   try {
     const { id } = req.params;
     
-    const sql = 'SELECT id, name, email, phone, cv_text, created_at, updated_at FROM candidates WHERE id = ?';
-    const candidates = await tidbService.executeQuery(sql, [id]);
+    const candidate = await tidbService.getCandidateById(id);
     
-    if (candidates.length === 0) {
+    if (!candidate) {
       return res.status(404).json({ error: 'Candidate not found' });
     }
-    
-    const candidate = candidates[0];
     
     res.json({
       success: true,
@@ -84,7 +81,27 @@ async function getCandidate(req, res) {
   }
 }
 
+/**
+ * Get all candidates
+ * @param {import('express').Request} req 
+ * @param {import('express').Response} res 
+ */
+async function getAllCandidates(req, res) {
+  try {
+    const candidates = await tidbService.getAllCandidates();
+    
+    res.json({
+      success: true,
+      data: candidates
+    });
+  } catch (error) {
+    console.error('Error in getAllCandidates:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 module.exports = {
   uploadCV,
-  getCandidate
+  getCandidate,
+  getAllCandidates
 };

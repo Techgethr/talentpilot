@@ -1,6 +1,8 @@
 // src/services/nlpService.js
 // Service for natural language processing
 
+const embeddingService = require('./embeddingService');
+
 class NLPService {
   /**
    * Extract key requirements from job description
@@ -53,16 +55,13 @@ class NLPService {
   }
 
   /**
-   * Convert text to vector representation
+   * Convert text to vector representation using OpenAI embeddings
    * @param {string} text - Text to convert to vector
-   * @returns {Promise<Array>} - Vector representation
+   * @returns {Promise<Array>} - Vector representation (1536 dimensions)
    */
   async textToVector(text) {
-    // In a real implementation, this would use an embedding model
-    // to convert text to vector representation
-    
-    // Placeholder implementation - returning a mock vector
-    return Array(128).fill(0).map(() => Math.random());
+    // Use OpenAI embeddings service
+    return await embeddingService.generateEmbedding(text);
   }
 }
 

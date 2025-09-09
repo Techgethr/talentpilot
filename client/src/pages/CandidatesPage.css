@@ -156,3 +156,33 @@
   border-radius: 4px;
   margin-bottom: 1rem;
 }
+
+.candidates-table {
+  overflow-x: auto;
+}
+
+.candidates-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.candidates-table th,
+.candidates-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.candidates-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.candidates-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+.candidates-table td {
+  color: #333;
+}

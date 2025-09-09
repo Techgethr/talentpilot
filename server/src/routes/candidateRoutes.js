@@ -25,6 +25,9 @@ const upload = multer({
 
 const router = express.Router();
 
+// GET /candidates - Get all candidates
+router.get('/', candidateController.getAllCandidates);
+
 // POST /candidates/upload - Upload and process candidate CV
 router.post('/upload', upload.single('cvFile'), candidateController.uploadCV);
 

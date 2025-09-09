@@ -1,10 +1,11 @@
 // client/src/pages/CandidatesPage.js
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { candidateAPI } from '../services/api';
 import './CandidatesPage.css';
 
 const CandidatesPage = () => {
   const [candidates, setCandidates] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -15,6 +16,23 @@ const CandidatesPage = () => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const fileInputRef = useRef(null);
+
+  // Load candidates when component mounts
+  useEffect(() => {
+    loadCandidates();
+  }, []);
+
+  const loadCandidates = async () => {
+    try {
+      setLoading(true);
+      const response = await candidateAPI.getAllCandidates();
+      setCandidates(response.data.data || []);
+    } catch (error) {
+      console.error('Error loading candidates:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -70,7 +88,8 @@ const CandidatesPage = () => {
         fileInputRef.current.value = '';
       }
       
-      // In a real app, you might want to refresh the candidates list here
+      // Reload candidates list
+      loadCandidates();
     } catch (error) {
       console.error('Error uploading CV:', error);
       setSubmitError(error.response?.data?.error || 'Failed to upload CV. Please try again.');
@@ -160,8 +179,34 @@ const CandidatesPage = () => {
 
         <div className="candidates-list">
           <h3>Candidate List</h3>
-          <p>Candidates will appear here once uploaded.</p>
-          {/* In a real implementation, you would fetch and display candidates here */}
+          {loading ? (
+            <p>Loading candidates...</p>
+          ) : candidates.length === 0 ? (
+            <p>No candidates uploaded yet.</p>
+          ) : (
+            <div className="candidates-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Uploaded</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {candidates.map((candidate) => (
+                    <tr key={candidate.id}>
+                      <td>{candidate.name}</td>
+                      <td>{candidate.email || '-'}</td>
+                      <td>{candidate.phone || '-'}</td>
+                      <td>{new Date(candidate.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

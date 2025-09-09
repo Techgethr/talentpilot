@@ -68,7 +68,7 @@ class TiDBService {
         email VARCHAR(255) UNIQUE,
         phone VARCHAR(50),
         cv_text TEXT,
-        cv_vector VECTOR(128),
+        cv_vector VECTOR(1536),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
@@ -81,7 +81,7 @@ class TiDBService {
         title VARCHAR(255) NOT NULL,
         description TEXT,
         requirements JSON,
-        job_vector VECTOR(128),
+        job_vector VECTOR(1536),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
@@ -162,6 +162,37 @@ class TiDBService {
 
     const result = await this.executeQuery(sql, params);
     return result.insertId;
+  }
+
+  /**
+   * Get all candidates
+   * @returns {Promise<Array>} - Array of candidates
+   */
+  async getAllCandidates() {
+    const sql = `
+      SELECT id, name, email, phone, created_at
+      FROM candidates
+      ORDER BY created_at DESC
+    `;
+    
+    const results = await this.executeQuery(sql);
+    return results;
+  }
+
+  /**
+   * Get candidate by ID
+   * @param {number} id - Candidate ID
+   * @returns {Promise<Object>} - Candidate data
+   */
+  async getCandidateById(id) {
+    const sql = `
+      SELECT id, name, email, phone, cv_text, created_at, updated_at
+      FROM candidates
+      WHERE id = ?
+    `;
+    
+    const results = await this.executeQuery(sql, [id]);
+    return results.length > 0 ? results[0] : null;
   }
 
   /**

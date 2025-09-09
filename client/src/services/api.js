@@ -34,6 +34,8 @@ export const candidateAPI = {
   },
   getCandidate: (id) => 
     api.get(`/candidates/${id}`),
+  getAllCandidates: () => 
+    api.get('/candidates'),
 };
 
 // Job endpoints
