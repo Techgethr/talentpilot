@@ -146,7 +146,7 @@ talent-pilot-chat/
 
 ## API Documentation
 
-See [talent-pilot-chat/server/API.md](talent-pilot-chat/server/API.md) for detailed API documentation with examples.
+See [server/API.md](server/API.md) for detailed API documentation with examples.
 
 ## License
 
