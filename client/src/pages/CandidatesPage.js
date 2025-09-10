@@ -7,6 +7,7 @@ import './CandidatesPage.css';
 const CandidatesPage = () => {
   const navigate = useNavigate();
   const [candidates, setCandidates] = useState([]);
+  const [filteredCandidates, setFilteredCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
@@ -18,12 +19,29 @@ const CandidatesPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  
+  // Pagination and search state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const candidatesPerPage = 20;
+  
   const fileInputRef = useRef(null);
 
   // Load candidates when component mounts
   useEffect(() => {
     loadCandidates();
   }, []);
+
+  // Filter candidates when searchTerm changes
+  useEffect(() => {
+    const filtered = candidates.filter(candidate => 
+      candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (candidate.email && candidate.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (candidate.phone && candidate.phone.includes(searchTerm))
+    );
+    setFilteredCandidates(filtered);
+    setCurrentPage(1); // Reset to first page when search changes
+  }, [searchTerm, candidates]);
 
   const loadCandidates = async () => {
     try {
@@ -101,6 +119,20 @@ const CandidatesPage = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Pagination logic
+  const indexOfLastCandidate = currentPage * candidatesPerPage;
+  const indexOfFirstCandidate = indexOfLastCandidate - candidatesPerPage;
+  const currentCandidates = filteredCandidates.slice(indexOfFirstCandidate, indexOfLastCandidate);
+  const totalPages = Math.ceil(filteredCandidates.length / candidatesPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
   };
 
   return (
@@ -193,59 +225,118 @@ const CandidatesPage = () => {
       </div>
 
       <div className="candidates-list">
-        <h3>Candidate List</h3>
+        <div className="candidates-list-header">
+          <h3>Candidate List</h3>
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="Search candidates..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="search-input"
+            />
+          </div>
+        </div>
+        
         {loading ? (
           <p>Loading candidates...</p>
-        ) : candidates.length === 0 ? (
-          <p>No candidates uploaded yet.</p>
+        ) : filteredCandidates.length === 0 ? (
+          <p>No candidates found.</p>
         ) : (
-          <div className="candidates-table">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>LinkedIn</th>
-                  <th>Uploaded</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {candidates.map((candidate) => (
-                  <tr key={candidate.id}>
-                    <td>{candidate.name}</td>
-                    <td>{candidate.email || '-'}</td>
-                    <td>{candidate.phone || '-'}</td>
-                    <td>
-                      {candidate.linkedin_url ? (
-                        <a href={candidate.linkedin_url} target="_blank" rel="noopener noreferrer">
-                          View Profile
-                        </a>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                    <td>{new Date(candidate.created_at).toLocaleDateString()}</td>
-                    <td>
-                      <button 
-                        className="edit-button"
-                        onClick={() => navigate(`/candidates/${candidate.id}/edit`)}
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        className="similar-button"
-                        onClick={() => navigate(`/candidates/${candidate.id}/similar`)}
-                      >
-                        Find Similar
-                      </button>
-                    </td>
+          <>
+            <div className="candidates-table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>LinkedIn</th>
+                    <th>Uploaded</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {currentCandidates.map((candidate) => (
+                    <tr key={candidate.id}>
+                      <td>{candidate.name}</td>
+                      <td>{candidate.email || '-'}</td>
+                      <td>{candidate.phone || '-'}</td>
+                      <td>
+                        {candidate.linkedin_url ? (
+                          <a href={candidate.linkedin_url} target="_blank" rel="noopener noreferrer">
+                            View Profile
+                          </a>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td>{new Date(candidate.created_at).toLocaleDateString()}</td>
+                      <td>
+                        <button 
+                          className="edit-button"
+                          onClick={() => navigate(`/candidates/${candidate.id}/edit`)}
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          className="similar-button"
+                          onClick={() => navigate(`/candidates/${candidate.id}/similar`)}
+                        >
+                          Find Similar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="pagination">
+                <button 
+                  onClick={() => handlePageChange(currentPage - 1)} 
+                  disabled={currentPage === 1}
+                  className="pagination-button"
+                >
+                  Previous
+                </button>
+                
+                {[...Array(totalPages)].map((_, index) => {
+                  const pageNumber = index + 1;
+                  // Only show first, last, current, and nearby pages
+                  if (
+                    pageNumber === 1 || 
+                    pageNumber === totalPages || 
+                    (pageNumber >= currentPage - 2 && pageNumber <= currentPage + 2)
+                  ) {
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => handlePageChange(pageNumber)}
+                        className={`pagination-button ${currentPage === pageNumber ? 'active' : ''}`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  } else if (pageNumber === currentPage - 3 || pageNumber === currentPage + 3) {
+                    // Show ellipsis for skipped pages
+                    return <span key={pageNumber} className="pagination-ellipsis">...</span>;
+                  }
+                  return null;
+                })}
+                
+                <button 
+                  onClick={() => handlePageChange(currentPage + 1)} 
+                  disabled={currentPage === totalPages}
+                  className="pagination-button"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
