@@ -202,7 +202,7 @@ function formatCompleteAgentResponse(result) {
     response += `- **Email**: ${candidate.email || 'Not provided'}\n`;
     response += `- **Phone**: ${candidate.phone || 'Not provided'}\n`;
     response += `- **LinkedIn**: ${candidate.linkedinUrl || 'Not provided'}\n`;
-    response += `- **Match Score**: ${(candidate.similarity * 100).toFixed(1)}%\n`;
+    //response += `- **Match Score**: ${(candidate.similarity * 100).toFixed(1)}%\n`;
     
     if (candidate.profileSummary) {
       response += `- **Profile Summary**: ${candidate.profileSummary}\n`;
@@ -213,6 +213,10 @@ function formatCompleteAgentResponse(result) {
       response += `  - Match Score: ${candidate.matchAnalysis.matchScore || 'N/A'}\n`;
       response += `  - Strengths: ${candidate.matchAnalysis.strengths?.join(', ') || 'N/A'}\n`;
       response += `  - Key Skills Match: ${candidate.matchAnalysis.keySkillsMatch?.join(', ') || 'N/A'}\n`;
+      response += `  - Areas for Development: ${candidate.matchAnalysis.areasForDevelopment?.join(', ') || 'N/A'}\n`;
+      response += `  - Experience Relevance: ${candidate.matchAnalysis.experienceRelevance || 'N/A'}\n`;
+      response += `  - Cultural Fit: ${candidate.matchAnalysis.culturalFit || 'N/A'}\n`;
+      response += `  - Summary: ${candidate.matchAnalysis.summary || 'N/A'}\n`;
     }
     
     // Contact Recommendations
