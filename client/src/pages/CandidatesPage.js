@@ -110,145 +110,143 @@ const CandidatesPage = () => {
         <p>Manage candidate profiles and upload new CVs</p>
       </div>
 
-      <div className="content-grid">
-        <div className="form-section">
-          <h3>Upload New Candidate</h3>
-          <form onSubmit={handleSubmit} className="candidate-form">
-            <div className="form-group">
-              <label htmlFor="name">Full Name</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-              />
-            </div>
+      <div className="form-section">
+        <h3>Upload New Candidate</h3>
+        <form onSubmit={handleSubmit} className="candidate-form">
+          <div className="form-group">
+            <label htmlFor="name">Full Name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+            />
+          </div>
 
-            <div className="form-group">
-              <label htmlFor="phone">Phone</label>
-              <input
-                type="text"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-              />
-            </div>
+          <div className="form-group">
+            <label htmlFor="phone">Phone</label>
+            <input
+              type="text"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+            />
+          </div>
 
-            <div className="form-group">
-              <label htmlFor="linkedinUrl">LinkedIn Profile URL</label>
-              <input
-                type="url"
-                id="linkedinUrl"
-                name="linkedinUrl"
-                value={formData.linkedinUrl}
-                onChange={handleChange}
-                placeholder="https://linkedin.com/in/username"
-              />
-            </div>
+          <div className="form-group">
+            <label htmlFor="linkedinUrl">LinkedIn Profile URL</label>
+            <input
+              type="url"
+              id="linkedinUrl"
+              name="linkedinUrl"
+              value={formData.linkedinUrl}
+              onChange={handleChange}
+              placeholder="https://linkedin.com/in/username"
+            />
+          </div>
 
-            <div className="form-group">
-              <label htmlFor="cvFile">CV File</label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                id="cvFile"
-                name="cvFile"
-                onChange={handleFileChange}
-                accept=".pdf,.docx,.txt"
-                required
-              />
-              {cvFile && (
-                <div className="file-preview">
-                  <span>{cvFile.name}</span>
-                  <button type="button" onClick={handleFileRemove} className="remove-file">
-                    Remove
-                  </button>
-                </div>
-              )}
-              <div className="file-hint">
-                Supported formats: PDF, Word (.docx), TXT
+          <div className="form-group">
+            <label htmlFor="cvFile">CV File</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              id="cvFile"
+              name="cvFile"
+              onChange={handleFileChange}
+              accept=".pdf,.docx,.txt"
+              required
+            />
+            {cvFile && (
+              <div className="file-preview">
+                <span>{cvFile.name}</span>
+                <button type="button" onClick={handleFileRemove} className="remove-file">
+                  Remove
+                </button>
               </div>
+            )}
+            <div className="file-hint">
+              Supported formats: PDF, Word (.docx), TXT
             </div>
+          </div>
 
-            {submitError && <div className="error-message">{submitError}</div>}
-            {submitSuccess && <div className="success-message">Candidate uploaded successfully!</div>}
+          {submitError && <div className="error-message">{submitError}</div>}
+          {submitSuccess && <div className="success-message">Candidate uploaded successfully!</div>}
 
-            <button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Uploading...' : 'Upload Candidate'}
-            </button>
-          </form>
-        </div>
+          <button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Uploading...' : 'Upload Candidate'}
+          </button>
+        </form>
+      </div>
 
-        <div className="candidates-list">
-          <h3>Candidate List</h3>
-          {loading ? (
-            <p>Loading candidates...</p>
-          ) : candidates.length === 0 ? (
-            <p>No candidates uploaded yet.</p>
-          ) : (
-            <div className="candidates-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>LinkedIn</th>
-                    <th>Uploaded</th>
-                    <th>Actions</th>
+      <div className="candidates-list">
+        <h3>Candidate List</h3>
+        {loading ? (
+          <p>Loading candidates...</p>
+        ) : candidates.length === 0 ? (
+          <p>No candidates uploaded yet.</p>
+        ) : (
+          <div className="candidates-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>LinkedIn</th>
+                  <th>Uploaded</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {candidates.map((candidate) => (
+                  <tr key={candidate.id}>
+                    <td>{candidate.name}</td>
+                    <td>{candidate.email || '-'}</td>
+                    <td>{candidate.phone || '-'}</td>
+                    <td>
+                      {candidate.linkedin_url ? (
+                        <a href={candidate.linkedin_url} target="_blank" rel="noopener noreferrer">
+                          View Profile
+                        </a>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
+                    <td>{new Date(candidate.created_at).toLocaleDateString()}</td>
+                    <td>
+                      <button 
+                        className="edit-button"
+                        onClick={() => navigate(`/candidates/${candidate.id}/edit`)}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        className="similar-button"
+                        onClick={() => navigate(`/candidates/${candidate.id}/similar`)}
+                      >
+                        Find Similar
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {candidates.map((candidate) => (
-                    <tr key={candidate.id}>
-                      <td>{candidate.name}</td>
-                      <td>{candidate.email || '-'}</td>
-                      <td>{candidate.phone || '-'}</td>
-                      <td>
-                        {candidate.linkedin_url ? (
-                          <a href={candidate.linkedin_url} target="_blank" rel="noopener noreferrer">
-                            View Profile
-                          </a>
-                        ) : (
-                          '-'
-                        )}
-                      </td>
-                      <td>{new Date(candidate.created_at).toLocaleDateString()}</td>
-                      <td>
-                        <button 
-                          className="edit-button"
-                          onClick={() => navigate(`/candidates/${candidate.id}/edit`)}
-                        >
-                          Edit
-                        </button>
-                        <button 
-                          className="similar-button"
-                          onClick={() => navigate(`/candidates/${candidate.id}/similar`)}
-                        >
-                          Find Similar
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
