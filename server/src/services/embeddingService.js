@@ -9,7 +9,8 @@ class EmbeddingService {
   constructor() {
     // Initialize OpenAI client
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: process.env.OPENAI_KEY,
+      baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
     });
   }
 
@@ -28,7 +29,7 @@ class EmbeddingService {
       const trimmedText = text.trim().substring(0, 8000);
       
       const response = await this.openai.embeddings.create({
-        model: 'text-embedding-3-small',
+        model: process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small',
         input: trimmedText,
         encoding_format: 'float',
       });

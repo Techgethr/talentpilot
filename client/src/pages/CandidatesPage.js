@@ -235,6 +235,12 @@ const CandidatesPage = () => {
                         >
                           Edit
                         </button>
+                        <button 
+                          className="similar-button"
+                          onClick={() => navigate(`/candidates/${candidate.id}/similar`)}
+                        >
+                          Find Similar
+                        </button>
                       </td>
                     </tr>
                   ))}

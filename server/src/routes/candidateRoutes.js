@@ -37,4 +37,7 @@ router.put('/:id', upload.single('cvFile'), candidateController.updateCandidate)
 // GET /candidates/:id - Get candidate by ID
 router.get('/:id', candidateController.getCandidate);
 
+// GET /candidates/:id/similar - Get similar candidates
+router.get('/:id/similar', candidateController.getSimilarCandidates);
+
 module.exports = router;

@@ -62,6 +62,8 @@ export const candidateAPI = {
     api.get(`/candidates/${id}`),
   getAllCandidates: () => 
     api.get('/candidates'),
+  getSimilarCandidates: (id) => 
+    api.get(`/candidates/${id}/similar`),
 };
 
 // Job endpoints

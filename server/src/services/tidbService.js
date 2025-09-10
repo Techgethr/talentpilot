@@ -231,7 +231,7 @@ class TiDBService {
    */
   async getCandidateById(id) {
     const sql = `
-      SELECT id, name, email, phone, linkedin_url, cv_text, created_at, updated_at
+      SELECT id, name, email, phone, linkedin_url, cv_text, cv_vector, created_at, updated_at
       FROM candidates
       WHERE id = ?
     `;
@@ -282,6 +282,54 @@ class TiDBService {
       
       // Fallback to simple search if vector functions are not available
       return await this.fallbackSearch(limit);
+    }
+  }
+
+  /**
+   * Search for candidates similar to a given candidate using vector similarity
+   * @param {number} candidateId - ID of the candidate to find similar candidates for
+   * @param {number} limit - Maximum number of candidates to return
+   * @returns {Promise<Array>} - Array of similar candidates
+   */
+  async searchSimilarCandidates(candidateId, limit = 10) {
+    try {
+      // Validate and ensure limit is a proper integer
+      const validLimit = Math.min(Math.max(1, Math.floor(limit)), 100);
+      
+      // First get the candidate vector
+      const baseCandidate = await this.getCandidateById(candidateId);
+      if (!baseCandidate || !baseCandidate.cv_vector) {
+        throw new Error('Candidate not found or has no vector data');
+      }
+      
+      // Parse the vector from JSON
+      const candidateVector = JSON.parse(baseCandidate.cv_vector);
+      const candidateVectorJson = JSON.stringify(candidateVector);
+      
+      // Use VEC_COSINE_DISTANCE function for vector similarity search
+      const sql = `
+        SELECT id, name, email, phone, linkedin_url,
+               VEC_COSINE_DISTANCE(cv_vector, CAST(? AS VECTOR(1536))) as similarity
+        FROM candidates
+        WHERE id != ?
+        ORDER BY similarity ASC
+        LIMIT 10
+      `;
+
+      const params = [candidateVectorJson, candidateId];
+      const results = await this.executeQuery(sql, params);
+      
+      return results.map(candidate => ({
+        id: candidate.id,
+        name: candidate.name,
+        email: candidate.email,
+        phone: candidate.phone,
+        linkedinUrl: candidate.linkedin_url,
+        similarity: candidate.similarity
+      }));
+    } catch (error) {
+      console.error('Error in searchSimilarCandidates:', error);
+      throw error;
     }
   }
   

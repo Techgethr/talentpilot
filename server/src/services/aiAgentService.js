@@ -2,13 +2,15 @@
 // Base service for AI agents using OpenAI SDK
 
 const OpenAI = require('openai');
-const tidbService = require('./tidbService');
+const dotenv = require('dotenv');
+dotenv.config();
 
 class AIAgentService {
   constructor() {
     // Initialize OpenAI client
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: process.env.OPENAI_KEY,
+      baseURL: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
     });
   }
 
@@ -21,7 +23,7 @@ class AIAgentService {
   async generateResponse(messages, options = {}) {
     try {
       const defaultOptions = {
-        model: 'gpt-4o-mini',
+        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
         temperature: 0.7,
         max_tokens: 1000,
         ...options

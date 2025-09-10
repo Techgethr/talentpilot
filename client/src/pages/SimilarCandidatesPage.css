@@ -1,0 +1,62 @@
+/* Similar Candidates Page Styles */
+.similarity-bar {
+  position: relative;
+  width: 100px;
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.similarity-fill {
+  height: 100%;
+  background-color: #4CAF50;
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.similarity-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #333;
+}
+
+.similar-button {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
+  margin: 2px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.similar-button:hover {
+  background-color: #0b7dda;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: #2196F3;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}

@@ -155,9 +155,35 @@ async function getAllCandidates(req, res) {
   }
 }
 
+/**
+ * Get similar candidates based on vector similarity
+ * @param {import('express').Request} req 
+ * @param {import('express').Response} res 
+ */
+async function getSimilarCandidates(req, res) {
+  try {
+    const { id } = req.params;
+    const { limit = 10 } = req.query;
+    
+    // Validate limit parameter
+    const validLimit = Math.min(Math.max(1, parseInt(limit)), 100);
+    
+    const similarCandidates = await tidbService.searchSimilarCandidates(id, validLimit);
+    
+    res.json({
+      success: true,
+      data: similarCandidates
+    });
+  } catch (error) {
+    console.error('Error in getSimilarCandidates:', error);
+    res.status(500).json({ error: 'Internal server error: ' + error.message });
+  }
+}
+
 module.exports = {
   uploadCV,
   updateCandidate,
   getCandidate,
-  getAllCandidates
+  getAllCandidates,
+  getSimilarCandidates
 };
