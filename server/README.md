@@ -28,6 +28,36 @@ server/
 - **Conversation Management**: Handles conversation creation, message storage, and title updates
 - **RESTful API**: Provides endpoints for chat, candidates, jobs, users, and feedback
 
+## Use Cases
+
+The TalentPilot Server backend enables several advanced recruitment capabilities:
+
+1. **Semantic Candidate Matching**: Process natural language job descriptions and match them with candidate CVs using vector embeddings.
+
+2. **Scalable Data Processing**: Handle large volumes of candidate data with efficient vector search capabilities.
+
+3. **Real-time Collaboration**: Support multiple recruiters working with the system simultaneously through robust API endpoints.
+
+4. **Analytics and Reporting**: Store conversation data for analysis of recruitment patterns and effectiveness.
+
+5. **Feedback Integration**: Collect and process recruiter feedback to improve matching accuracy over time.
+
+## Benefits of TiDB Cloud and Vector Search
+
+The server leverages TiDB Cloud's advanced features for optimal performance:
+
+1. **Vector Search Performance**: Utilize TiDB's native vector data type for efficient similarity searches across large candidate databases.
+
+2. **Horizontal Scalability**: Automatically scale to handle growing datasets and increasing user loads without performance degradation.
+
+3. **Data Flexibility**: Use JSON data types to store complex candidate information and job requirements with schema flexibility.
+
+4. **High Availability**: Benefit from TiDB Cloud's enterprise-grade uptime and automatic failover capabilities.
+
+5. **Security**: Leverage built-in encryption and access controls to protect sensitive candidate data.
+
+6. **Global Distribution**: Deploy database clusters closer to users for reduced latency.
+
 ## Setup
 
 1. Install dependencies:
@@ -75,12 +105,6 @@ server/
 - `POST /api/jobs` - Create a new job posting
 - `GET /api/jobs/:id` - Get job by ID
 - `GET /api/jobs/:id/candidates` - Search candidates for a specific job
-- `POST /api/users` - Create a new user (Admin only)
-- `GET /api/users/:id` - Get user by ID
-- `PUT /api/users/:id` - Update user
-- `DELETE /api/users/:id` - Delete user (Admin only)
-- `POST /api/feedback` - Submit feedback on candidate matches
-- `GET /api/feedback/:jobId` - Get feedback for a specific job
 - `GET /api/conversations` - Get all conversations
 - `POST /api/conversations` - Create a new conversation
 - `GET /api/conversations/:id` - Get conversation by ID
@@ -110,8 +134,6 @@ The application uses the following tables in TiDB:
 2. **jobs** - Stores job postings and requirement vectors
 3. **conversations** - Stores chat conversations for analytics
 4. **messages** - Stores individual messages within conversations
-5. **users** - Stores user information for authentication
-6. **feedback** - Stores feedback on candidate matches
 
 ## Development
 
@@ -130,13 +152,14 @@ This project uses:
 
 ## Recent Enhancements
 
+### Conversation Termination
+- API responses now include a `candidatesDelivered` flag to indicate when candidates have been delivered
+- This allows the frontend to automatically terminate conversations after candidate delivery
+- Supports feedback mode even after conversation termination
+
 ### Smart Conversation Naming
 - Conversations are automatically renamed based on job titles after the first response
 - The `sendMessage` endpoint now includes logic to update conversation titles
-
-### Conversation Completion Flag
-- API responses now include a `candidatesDelivered` flag to indicate when candidates have been delivered
-- This allows the frontend to hide the input field after candidate delivery
 
 ### Enhanced Agent Coordination
 - Improved progress reporting in the agent coordinator

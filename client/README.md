@@ -21,8 +21,39 @@ src/
 - **Conversation Management**: Create, view, and delete conversations
 - **Real-time Progress Tracking**: Visual indicators showing the current step in the candidate search process
 - **Smart Conversation Naming**: Conversations automatically named based on job titles
-- **Conversation Completion**: Input is hidden after candidate delivery to indicate search completion
+- **Similarity Candidate Search**: Uses vector similarity search to find similar candidates from the database
+- **Conversation Termination**: Conversations are automatically terminated after candidate delivery to prevent further input
 - **Responsive Design**: Works on desktop and mobile devices
+
+## Use Cases
+
+TalentPilot Frontend supports several key recruitment workflows:
+
+1. **Interactive Candidate Search**: HR professionals can describe job requirements in natural language and receive real-time candidate matches.
+
+2. **Collaborative Hiring**: Multiple team members can review candidate matches and provide feedback through the platform.
+
+3. **Talent Pipeline Management**: Build and maintain talent pools for current and future hiring needs.
+
+4. **Interview Scheduling**: Access candidate profiles with pre-generated communication templates to streamline outreach.
+
+5. **Hiring Analytics**: Track conversation patterns and candidate matches to improve recruitment strategies.
+
+## Benefits of the Frontend Interface
+
+The TalentPilot Frontend provides several advantages for recruitment teams:
+
+1. **Intuitive User Experience**: Familiar ChatGPT-like interface reduces learning curve for new users.
+
+2. **Real-time Feedback**: Instant progress updates keep users informed throughout the candidate search process.
+
+3. **Mobile Responsiveness**: Access candidate matches and manage conversations from any device.
+
+4. **Visual Progress Tracking**: Clear indicators show users where they are in the candidate matching process.
+
+5. **Smart Organization**: Automatic conversation naming and termination help keep the interface clean and organized.
+
+6. **Seamless Integration**: Direct connection to the backend services powered by TiDB Cloud vector search.
 
 ## Setup
 
@@ -71,29 +102,3 @@ Builds the app for production to the `build` folder.
 **Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
 If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-## Recent Enhancements
-
-### Progress Tracking
-- Real-time progress updates showing the current step in the candidate search process
-- Visual progress bar with 5 distinct steps:
-  1. Analyze requirements
-  2. Search candidates
-  3. Generate profiles
-  4. Create templates
-  5. Final summary
-- Each step is highlighted as it becomes active
-
-### Smart Conversation Naming
-- Conversations are automatically renamed based on job titles after the first response
-- Provides better organization and context for users
-
-### Conversation Completion
-- Input field is hidden after candidate delivery to indicate the search is complete
-- Shows a completion message to inform users that the process is finished
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
