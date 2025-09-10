@@ -125,13 +125,14 @@ const ChatGPTPage = () => {
         
         setMessages(response.data.data.conversation.messages);
         
-        // Set candidatesDelivered to true for current conversation
+        // Set candidatesDelivered based on server response
         // This indicates the search process is complete for this conversation
+        const candidatesDelivered = response.data.data.candidatesDelivered || false;
         setConversationStates(prev => ({
           ...prev,
           [response.data.data.conversation.id]: {
             ...prev[response.data.data.conversation.id],
-            candidatesDelivered: true
+            candidatesDelivered: candidatesDelivered
           }
         }));
       }
@@ -251,8 +252,14 @@ const ChatGPTPage = () => {
       setConversations([newConversation, ...conversations]);
       setCurrentConversation(newConversation);
       setMessages([]);
-      // Don't need to explicitly set candidatesDelivered to false for new conversation
-      // since it won't exist in conversationStates yet
+      // Initialize conversation state - new conversations don't have candidates delivered yet
+      setConversationStates(prev => ({
+        ...prev,
+        [newConversation.id]: {
+          ...prev[newConversation.id],
+          candidatesDelivered: false
+        }
+      }));
     } catch (error) {
       console.error('Error creating conversation:', error);
     }
@@ -263,7 +270,24 @@ const ChatGPTPage = () => {
       const response = await conversationAPI.getConversation(conversationId);
       setCurrentConversation(response.data.data);
       setMessages(response.data.data.messages || []);
-      // Don't reset candidatesDelivered here, keep the state for this conversation
+      
+      // Check if this conversation already has candidate search results
+      // Look for messages that contain candidate search results
+      const hasCandidateResults = response.data.data.messages?.some(message => 
+        message.role === 'assistant' && 
+        (message.content.includes('Job Analysis Results') || 
+         message.content.includes('Candidates Found') ||
+         message.content.includes('## Candidates Found'))
+      ) || false;
+      
+      // Update conversation state based on whether candidates have been delivered
+      setConversationStates(prev => ({
+        ...prev,
+        [conversationId]: {
+          ...prev[conversationId],
+          candidatesDelivered: hasCandidateResults
+        }
+      }));
     } catch (error) {
       console.error('Error loading conversation:', error);
     }
@@ -451,12 +475,7 @@ const ChatGPTPage = () => {
         {currentConversation && currentConversation.id && conversationStates[currentConversation.id] && conversationStates[currentConversation.id].candidatesDelivered && (
           <div className="conversation-complete-message">
             <p>Candidates for this job search have been delivered. You can start a new conversation to search for other candidates.</p>
-            <button 
-              className="feedback-toggle-btn"
-              onClick={() => setFeedbackMode(!feedbackMode)}
-            >
-              {feedbackMode ? 'Back to Search' : 'Provide Feedback'}
-            </button>
+            
           </div>
         )}
         
