@@ -17,6 +17,7 @@ const EditCandidatePage = () => {
     linkedinUrl: ''
   });
   const [cvFile, setCvFile] = useState(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [updateError, setUpdateError] = useState('');
   const fileInputRef = useRef(null);
@@ -71,6 +72,11 @@ const EditCandidatePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!isAuthorized) {
+      setUpdateError('Please authorize the processing of your data');
+      return;
+    }
+    
     setUpdating(true);
     setUpdateError('');
     setUpdateSuccess(false);
@@ -82,6 +88,7 @@ const EditCandidatePage = () => {
       formDataToSend.append('email', formData.email);
       formDataToSend.append('phone', formData.phone);
       formDataToSend.append('linkedinUrl', formData.linkedinUrl);
+      formDataToSend.append('authorized', isAuthorized);
       
       // Only append CV file if a new one was selected
       if (cvFile) {
@@ -216,8 +223,22 @@ const EditCandidatePage = () => {
             {updateError && <div className="error-message">{updateError}</div>}
             {updateSuccess && <div className="success-message">Candidate updated successfully!</div>}
 
+            <div className="form-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={isAuthorized}
+                  onChange={(e) => setIsAuthorized(e.target.checked)}
+                  required
+                />
+                <span className="checkbox-text">
+                  I confirm that I have the right to upload this candidate's data and CV for recruitment purposes
+                </span>
+              </label>
+            </div>
+
             <div className="form-actions">
-              <button type="submit" disabled={updating}>
+              <button type="submit" disabled={updating || !isAuthorized}>
                 {updating ? 'Updating...' : 'Update Candidate'}
               </button>
               <button type="button" onClick={() => navigate('/candidates')}>

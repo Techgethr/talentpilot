@@ -19,6 +19,7 @@ const CandidatesPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [isAuthorized, setIsAuthorized] = useState(false);
   
   // Pagination and search state
   const [currentPage, setCurrentPage] = useState(1);
@@ -83,6 +84,11 @@ const CandidatesPage = () => {
       return;
     }
     
+    if (!isAuthorized) {
+      setSubmitError('Please authorize the processing of your data');
+      return;
+    }
+    
     setIsSubmitting(true);
     setSubmitError('');
     setSubmitSuccess(false);
@@ -95,6 +101,7 @@ const CandidatesPage = () => {
       formDataToSend.append('phone', formData.phone);
       formDataToSend.append('linkedinUrl', formData.linkedinUrl);
       formDataToSend.append('cvFile', cvFile);
+      formDataToSend.append('authorized', isAuthorized);
 
       await candidateAPI.uploadCV(formDataToSend);
       setSubmitSuccess(true);
@@ -107,6 +114,7 @@ const CandidatesPage = () => {
         linkedinUrl: ''
       });
       setCvFile(null);
+      setIsAuthorized(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -218,7 +226,21 @@ const CandidatesPage = () => {
           {submitError && <div className="error-message">{submitError}</div>}
           {submitSuccess && <div className="success-message">Candidate uploaded successfully!</div>}
 
-          <button type="submit" disabled={isSubmitting}>
+          <div className="form-group">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={isAuthorized}
+                onChange={(e) => setIsAuthorized(e.target.checked)}
+                required
+              />
+              <span className="checkbox-text">
+                I confirm that I have the right to upload this candidate's data and CV for recruitment purposes
+              </span>
+            </label>
+          </div>
+
+          <button type="submit" disabled={isSubmitting || !isAuthorized}>
             {isSubmitting ? 'Uploading...' : 'Upload Candidate'}
           </button>
         </form>

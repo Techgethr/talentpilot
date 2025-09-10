@@ -113,6 +113,22 @@
   box-shadow: none;
 }
 
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-top: 0.25rem;
+}
+
+.checkbox-text {
+  flex: 1;
+}
+
 .file-preview {
   display: flex;
   justify-content: space-between;
